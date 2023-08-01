@@ -1,5 +1,6 @@
 using Characters;
 using Characters.Models;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -45,6 +46,14 @@ namespace Grid
             _isAttackingCell = true;
             highlight.material = redMat;
             highlight.gameObject.SetActive(true);
+        }
+
+        public void RedBlink()
+        {
+            Material mat = Instantiate(redMat);
+            Color from = new Color(1, 0, 0, 0.25f);
+            Color to = new Color(1, 0, 0, 0);
+            DOVirtual.Color(from,to, 1, value => mat.color = value).SetEase(Ease.InOutCubic)
         }
 
         public void DisableHighlight()

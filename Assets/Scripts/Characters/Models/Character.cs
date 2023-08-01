@@ -9,8 +9,9 @@ namespace Characters.Models
         protected Cell Location;
         protected int HealthPoints;
         protected int AttackPonints;
-        protected bool HasMoved;
-        protected bool HasAttacked;
+        
+        public bool HasMoved;
+        public bool HasAttacked;
         
 
         public virtual void Setup(Cell cell)

@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Characters;
+using Characters.Enemy;
 using Characters.Models;
 using Grid;
 using UnityEngine;
@@ -34,9 +38,14 @@ public class BoardManager : MonoBehaviour
     private RaycastHit hit;
     private Cell selectedCell;
     private PlayerCharacter currentPlayer;
+    private List<PlayerCharacter> playerUnits;
+    private List<Drone> drones;
+    private List<Dreadnought> dreadnoughts;
+    private List<CommandUnit> commandUnits;
     private static readonly int boardSize = 8;
     
     public static Board board;
+    public bool IsPlayerTurn { get; private set; }
     public UnityEvent<PlayerCharacter> charSelected;
 
     private void Start()
@@ -60,35 +69,51 @@ public class BoardManager : MonoBehaviour
 
     private void SetupLevel1()
     {
-        SpawnPiece(1, 4, gruntPrefab);
-        SpawnPiece(1, 2, jumpshipPrefab);
-        SpawnPiece(4, 4, tankPrefab);
+        playerUnits = new List<PlayerCharacter>
+        {
+            (PlayerCharacter)SpawnPiece(1, 4, gruntPrefab),
+            (PlayerCharacter)SpawnPiece(1, 2, jumpshipPrefab),
+            (PlayerCharacter)SpawnPiece(4, 4, tankPrefab)
+        };
+
+        drones = new List<Drone>()
+        {
+            (Drone)SpawnPiece(1, 4, dronePrefab)
+        };
     }
 
-    private static void SpawnPiece(int row, int col, GameObject prefab)
+    private static Character SpawnPiece(int row, int col, GameObject prefab)
     {
         var spawnCell = board[row, col];
         var piece = Instantiate(prefab);
         var character = piece.GetComponent<Character>();
         character.Setup(spawnCell);
         spawnCell.SetCharacter(character);
+        return character;
     }
 
     private void Update()
     {
         if (Input.GetMouseButtonDown(0)) TrySelectCell(Input.mousePosition);
+        
+        if (IsPlayerTurn && AllActionsPerformed()) EndPlayerTurn();
     }
-
+    
     private void TrySelectCell(Vector3 position)
     {
         Physics.Raycast(cam.ScreenPointToRay(position), out hit, Mathf.Infinity);
         if (hit.collider.TryGetComponent( out Cell cell))
         {
             ForEachCell(c => c.UnSelectCell());
-
+            
             if (cell.SelectCell() == CellState.Select) selectedCell = cell;
             else selectedCell = null;
         }
+    }
+
+    private bool AllActionsPerformed()
+    {
+        return playerUnits.All(unit => unit.HasMoved);
     }
 
     public void SelectCharacter(PlayerCharacter character)
@@ -112,5 +137,24 @@ public class BoardManager : MonoBehaviour
         if (IsWithinBoard(row, col)) return board[row, col];
 
         return null;
+    }
+
+    public void EndPlayerTurn()
+    {
+        IsPlayerTurn = false;
+        StartCoroutine(PlayEnemyTurn());
+    }
+
+    private IEnumerator PlayEnemyTurn()
+    {
+        yield return new WaitForSeconds(2);
+        foreach (var drone in drones)
+        {
+            if(drone != null && drone.TryMove())
+            {
+                yield return new WaitForSeconds(1);
+                drone.TryAttack();
+            }
+        }
     }
 }
