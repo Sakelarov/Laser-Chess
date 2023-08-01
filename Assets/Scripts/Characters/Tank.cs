@@ -69,10 +69,16 @@ namespace Characters
         }
         protected override void ShowMoveLocations()
         {
+            GetNewCells();
             foreach (var cell in availablePsns)
             {
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
             }
+        }
+        
+        protected override void ShowAttackLocations()
+        {
+            throw new System.NotImplementedException();
         }
 
         protected override void HideLocations()
@@ -92,13 +98,14 @@ namespace Characters
             HasMoved = true;
             HideLocations();
             
+            Location.SetCharacter(null);
             Location = cell;
             cell.SetCharacter(this);
             GetNewCells();
             
             var pos = transform.position;
             anim.SetBool(paramRun, true);
-            float speed = Vector3.Distance(transform.position, cell.Position);
+            float speed = Vector3.Distance(transform.position, cell.Position) * 0.8f;
             DOVirtual.Vector3(pos, cell.Position, speed, value => transform.position = value)
                 .SetEase(Ease.Linear)
                 .OnComplete(() => anim.SetBool(paramRun, false));

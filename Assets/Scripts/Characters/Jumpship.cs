@@ -48,6 +48,11 @@ namespace Characters
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
             }
         }
+        
+        protected override void ShowAttackLocations()
+        {
+            throw new System.NotImplementedException();
+        }
 
         protected override void HideLocations()
         {
@@ -66,6 +71,7 @@ namespace Characters
             HasMoved = true;
             HideLocations();
 
+            Location.SetCharacter(null);
             Location = cell;
             cell.SetCharacter(this);
             GetNewCells();

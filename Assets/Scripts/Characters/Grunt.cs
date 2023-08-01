@@ -45,12 +45,21 @@ namespace Characters
                 _rightCell.GreenHighlight();
         }
 
+        protected override void ShowAttackLocations()
+        {
+            throw new System.NotImplementedException();
+        }
+
         protected override void HideLocations()
         {
-            _topCell.DisableHighlight();
-            _bottomCell.DisableHighlight();
-            _leftCell.DisableHighlight();
-            _rightCell.DisableHighlight();
+            if (_topCell != null) 
+                _topCell.DisableHighlight();
+            if (_bottomCell != null)
+                _bottomCell.DisableHighlight();
+            if (_leftCell != null)
+                _leftCell.DisableHighlight();
+            if (_rightCell != null)
+                _rightCell.DisableHighlight();
         }
 
         protected override void Move(Cell cell)
@@ -62,6 +71,7 @@ namespace Characters
             HasMoved = true;
             HideLocations();
             
+            Location.SetCharacter(null);
             Location = cell;
             cell.SetCharacter(this);
             GetNewCells();

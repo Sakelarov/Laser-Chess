@@ -18,7 +18,9 @@ public abstract class PlayerCharacter : Character
     protected virtual void SelectCharacter()
     {
         IsSelected = true;
-        ShowMoveLocations();
+        
+        if (!HasMoved) ShowMoveLocations();
+        else if (!HasAttacked) ShowAttackLocations();
     }
 
     protected virtual void UnSelectCharacter()
@@ -34,6 +36,8 @@ public abstract class PlayerCharacter : Character
     }
 
     protected abstract void ShowMoveLocations();
+    
+    protected abstract void ShowAttackLocations();
 
     protected abstract void HideLocations();
 

@@ -42,7 +42,7 @@ public class BoardManager : MonoBehaviour
     private void Start()
     {
         cam = Camera.main;
-        board = GetComponent<Board>();
+        board = GetComponentInChildren<Board>();
 
         SetupLevel1();
     }

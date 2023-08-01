@@ -9,10 +9,11 @@ namespace Grid
     [System.Serializable]
     public class Cell : MonoBehaviour
     {
-        [SerializeField] private MeshRenderer highlight;
         [SerializeField] private Material greenMat;
         [SerializeField] private Material redMat;
-        
+
+        private readonly Vector3 psnCorrection = new Vector3(0, 0.12f, 0);
+        private MeshRenderer highlight;
         private Character _character;
         private bool _isMovingCell;
         private bool _isAttackingCell;
@@ -21,12 +22,14 @@ namespace Grid
         public bool IsOccupied => _character != null;
         public Vector3 Position { get; private set; }
         public Vector2Int Coordinates { get; private set; }
-        public UnityEvent<Cell> moveToCell;
-        public UnityEvent<Cell> attackCell;
+        [HideInInspector] public UnityEvent<Cell> moveToCell;
+        [HideInInspector] public UnityEvent<Cell> attackCell;
         
         private void Awake()
         {
-            Position = transform.position;
+            highlight = transform.GetChild(0).GetComponent<MeshRenderer>();
+            
+            Position = transform.position + psnCorrection;
             Coordinates = new Vector2Int(Mathf.RoundToInt(Position.z), Mathf.RoundToInt(Position.x));
         }
 
