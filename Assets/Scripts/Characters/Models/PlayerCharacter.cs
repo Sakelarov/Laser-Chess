@@ -1,6 +1,7 @@
 using Characters.Models;
 using Grid;
 using UnityEngine;
+using Utils;
 
 public abstract class PlayerCharacter : Character
 {
@@ -11,20 +12,30 @@ public abstract class PlayerCharacter : Character
         base.Setup(cell);
         
         Bm.ForEachCell(c => c.moveToCell.AddListener(Move));
+        Bm.charSelected.AddListener(CheckSelectedCharacter);
     }
 
-    public virtual void SelectCharacter()
+    protected virtual void SelectCharacter()
     {
-        if (!IsSelected)
-        {
-            IsSelected = true;
-            ShowMoveLocations();
-        }
+        IsSelected = true;
+        ShowMoveLocations();
+    }
+
+    protected virtual void UnSelectCharacter()
+    {
+        IsSelected = false;
+        HideLocations();
+    }
+
+    protected void CheckSelectedCharacter(PlayerCharacter character)
+    {
+        if (IsSelected && this != character) UnSelectCharacter();
+        else if (!IsSelected && this == character) this.InvokeAfterFrames(1,SelectCharacter);
     }
 
     protected abstract void ShowMoveLocations();
 
-    protected abstract void HideMoveLocations();
+    protected abstract void HideLocations();
 
     protected abstract void Move(Cell cell);
 }

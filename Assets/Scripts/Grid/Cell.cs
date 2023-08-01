@@ -53,11 +53,11 @@ namespace Grid
 
         public CellState SelectCell()
         {
-            if (IsOccupied && !IsSelected)
+            if (IsOccupied && !IsSelected && _character is PlayerCharacter ch)
             {
                 IsSelected = true;
-                if (_character is PlayerCharacter ch) ch.SelectCharacter();
-
+                BoardManager.Instance.SelectCharacter(ch);
+                
                 return CellState.Select;
             }
 
@@ -74,6 +74,11 @@ namespace Grid
             }
 
             return CellState.None;
+        }
+
+        public void UnSelectCell()
+        {
+            IsSelected = false;
         }
 
         public void SetCharacter(Character character)

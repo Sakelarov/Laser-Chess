@@ -13,6 +13,7 @@ namespace Characters
 
         private Animator anim;
         private int paramSpeed;
+        private int paramReload;
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
@@ -24,23 +25,27 @@ namespace Characters
 
         private void GetNewCells()
         {
-            var grid = Bm.board;
             var psn = Location.Coordinates;
-            _topCell = psn.x + 1 < 8 ? grid[psn.x + 1, psn.y] : null;
-            _bottomCell = psn.x - 1 >= 0 ? grid[psn.x - 1, psn.y] : null;
-            _leftCell = psn.y - 1 >= 0 ? grid[psn.x, psn.y - 1] : null;
-            _rightCell = psn.y + 1 < 8 ? grid[psn.x, psn.y + 1] : null;
+           
+            _topCell = BoardManager.TryGetCell(psn.x + 1, psn.y);
+            _bottomCell = BoardManager.TryGetCell(psn.x - 1, psn.y);
+            _leftCell = BoardManager.TryGetCell(psn.x, psn.y - 1);
+            _rightCell = BoardManager.TryGetCell(psn.x, psn.y + 1);
         }
 
         protected override void ShowMoveLocations()
         {
-            if (!_topCell.IsOccupied) _topCell.GreenHighlight();
-            if (!_bottomCell.IsOccupied) _bottomCell.GreenHighlight();
-            if (!_leftCell.IsOccupied) _leftCell.GreenHighlight();
-            if (!_rightCell.IsOccupied) _rightCell.GreenHighlight();
+            if (_topCell != null && !_topCell.IsOccupied)
+                _topCell.GreenHighlight();
+            if (_bottomCell != null &&!_bottomCell.IsOccupied)
+                _bottomCell.GreenHighlight();
+            if (_leftCell != null &&!_leftCell.IsOccupied)
+                _leftCell.GreenHighlight();
+            if (_rightCell != null &&!_rightCell.IsOccupied)
+                _rightCell.GreenHighlight();
         }
 
-        protected override void HideMoveLocations()
+        protected override void HideLocations()
         {
             _topCell.DisableHighlight();
             _bottomCell.DisableHighlight();
@@ -50,15 +55,15 @@ namespace Characters
 
         protected override void Move(Cell cell)
         {
-            if (cell == _topCell) transform.eulerAngles = Vector3.zero;
-            else if (cell == _bottomCell) transform.eulerAngles = new Vector3(0, 180, 0);
-            else if (cell == _leftCell) transform.eulerAngles = new Vector3(0, -90, 0);
-            else if (cell == _rightCell) transform.eulerAngles = new Vector3(0, 90, 0);
+            if (!Bm.IsCurrentlySelected(this)) return;
+            
+            transform.LookAt(cell.Position);
             
             HasMoved = true;
-            HideMoveLocations();
+            HideLocations();
             
             Location = cell;
+            cell.SetCharacter(this);
             GetNewCells();
             
             var pos = transform.position;
