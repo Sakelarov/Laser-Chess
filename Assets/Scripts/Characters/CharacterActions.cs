@@ -9,23 +9,54 @@ public class CharacterActions : MonoBehaviour
     // Define the diagonal directions
     private static readonly int[] dr = { 1, -1, 1, -1 };
     private static readonly int[] dc = { 1, 1, -1, -1 };
+    
+    // Define the orthogonal directions
+    private static readonly int[] or = { 0, 0, 1, -1 };
+    private static readonly int[] oc = { 1, -1, 0, 0 };
+
+    private static int[] dirR;
+    private static int[] dirC;
 
     private static readonly string flashName = "muzzleFlash";
+
+    public enum DirectionType
+    {
+        Orthogonal,
+        Diagonal
+    }
     
-    public static List<Cell> GetAvailableDiagonalTargets<T>(Cell location, List<Cell> directionCells = null)
+
+    public static List<Cell> GetAvailableTargets<T>(Cell location, DirectionType dirType, List<Cell> directionCells = null)
     {
         var psn = location.Coordinates;
         var results = new List<Cell>();
 
-        for (int i = 0; i < dr.Length; i++)
+        if (dirType == DirectionType.Orthogonal)
+        {
+            dirR = or;
+            dirC = oc;
+        }
+        else if (dirType == DirectionType.Diagonal)
+        {
+            dirR = dr;
+            dirC = oc;
+        }
+
+        if (dirR == null || dirC == null)
+        {
+            Debug.Log("Wrong direction");
+            return null;
+        }
+
+        for (int i = 0; i < dirR.Length; i++)
         {
             int r = psn.x;
             int c = psn.y;
 
             while (true)
             {
-                r += dr[i];
-                c += dc[i];
+                r += dirR[i];
+                c += dirC[i];
 
                 var cell = BoardManager.TryGetCell(r, c);
                 if (cell != null)
@@ -53,13 +84,13 @@ public class CharacterActions : MonoBehaviour
 
     private static void GetDirectionToTarget(Vector2Int psn, List<Cell> directionCells, int i, Cell target)
     {
-        int dirR = psn.x;
-        int dirC = psn.y;
+        int psnX = psn.x;
+        int psnY = psn.y;
         while (true)
         {
-            dirR += dr[i];
-            dirC += dc[i];
-            var directionCell = BoardManager.TryGetCell(dirR, dirC);
+            psnX += dirR[i];
+            psnY += dirC[i];
+            var directionCell = BoardManager.TryGetCell(psnX, psnY);
             if (directionCell != null && directionCell != target)
                 directionCells.Add(directionCell);
             else break;

@@ -57,7 +57,7 @@ namespace Characters.Player
         protected override void ShowAttackLocations()
         {
             attackHighlightedCells = new List<Cell>();
-            availableTargets = CharacterActions.GetAvailableDiagonalTargets<EnemyCharacter>(Location, attackHighlightedCells);
+            availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Diagonal, attackHighlightedCells);
             
             if (availableTargets.Count > 0)
             {

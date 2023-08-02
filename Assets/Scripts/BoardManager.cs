@@ -81,6 +81,7 @@ public class BoardManager : MonoBehaviour
         drones = new List<Drone>()
         {
             (Drone)SpawnPiece(4, 1, dronePrefab),
+            (Drone)SpawnPiece(4, 7, dronePrefab),
             (Drone)SpawnPiece(3, 2, dronePrefab)
         };
     }

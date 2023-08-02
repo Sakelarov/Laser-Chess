@@ -10,9 +10,9 @@ namespace Characters.Player
     {
         [SerializeField] private GameObject attackEffect;
         private List<Cell> attackTargets = new List<Cell>();
-        private Cell _topCell, _bottomCell, _leftCell, _rightCell; // attacking cells
+        private Cell _topCell, _bottomCell, _leftCell, _rightCell;
         
-        private Cell[] availablePsns = new Cell[8]; // movement cells
+        private Cell[] availableMovePositions = new Cell[8];
 
         private Animator anim;
         private int paramShoot, paramJump, paramDie, paramReload, paramSpeed;
@@ -34,19 +34,19 @@ namespace Characters.Player
         {
             var psn = Location.Coordinates;
             
-            availablePsns[0] = BoardManager.TryGetCell(psn.x + 2, psn.y + 1);
-            availablePsns[1] = BoardManager.TryGetCell(psn.x + 2, psn.y - 1);
-            availablePsns[2] = BoardManager.TryGetCell(psn.x + 1, psn.y + 2);
-            availablePsns[3] = BoardManager.TryGetCell(psn.x + 1, psn.y - 2);
-            availablePsns[4] = BoardManager.TryGetCell(psn.x - 1, psn.y + 2);
-            availablePsns[5] = BoardManager.TryGetCell(psn.x - 1, psn.y - 2);
-            availablePsns[6] = BoardManager.TryGetCell(psn.x - 2, psn.y + 1);
-            availablePsns[7] = BoardManager.TryGetCell(psn.x - 2, psn.y - 1);
+            availableMovePositions[0] = BoardManager.TryGetCell(psn.x + 2, psn.y + 1);
+            availableMovePositions[1] = BoardManager.TryGetCell(psn.x + 2, psn.y - 1);
+            availableMovePositions[2] = BoardManager.TryGetCell(psn.x + 1, psn.y + 2);
+            availableMovePositions[3] = BoardManager.TryGetCell(psn.x + 1, psn.y - 2);
+            availableMovePositions[4] = BoardManager.TryGetCell(psn.x - 1, psn.y + 2);
+            availableMovePositions[5] = BoardManager.TryGetCell(psn.x - 1, psn.y - 2);
+            availableMovePositions[6] = BoardManager.TryGetCell(psn.x - 2, psn.y + 1);
+            availableMovePositions[7] = BoardManager.TryGetCell(psn.x - 2, psn.y - 1);
         }
     
         protected override void ShowMoveLocations()
         {
-            foreach (var cell in availablePsns)
+            foreach (var cell in availableMovePositions)
             {
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
             }
@@ -92,7 +92,7 @@ namespace Characters.Player
 
         protected override void HideLocations()
         {
-            foreach (var cell in availablePsns)
+            foreach (var cell in availableMovePositions)
             {
                 if(cell != null) cell.DisableHighlight();
             }

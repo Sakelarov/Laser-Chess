@@ -8,7 +8,7 @@ public class ShotBehavior : MonoBehaviour
 	
 	public void Setup(float distance)
 	{
-		flyDistance = distance;
+		flyDistance = distance - 1;
 		gameObject.SetActive(true);
 	}
 	private void Update ()

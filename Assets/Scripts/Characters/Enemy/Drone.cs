@@ -70,7 +70,7 @@ namespace Characters.Enemy
 
         public override bool TryAttack()
         {
-            availableTargets = CharacterActions.GetAvailableDiagonalTargets<PlayerCharacter>(Location);
+            availableTargets = CharacterActions.GetAvailableTargets<PlayerCharacter>(Location, CharacterActions.DirectionType.Diagonal);
 
             if (availableTargets.Count > 0)
             {
