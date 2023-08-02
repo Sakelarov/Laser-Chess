@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using Characters.Models;
 using DG.Tweening;
 using Grid;
 using UnityEngine;
@@ -6,14 +9,16 @@ namespace Characters.Player
 {
     public class Grunt : PlayerCharacter
     {
-        private Cell _topCell;
-        private Cell _bottomCell;
-        private Cell _leftCell;
-        private Cell _rightCell;
+        [SerializeField] private GameObject shotPrefab;
+        [SerializeField] private Transform shotPosition;
+        
+        private List<Cell> attackHighlightedCells = new List<Cell>();
+        private List<Cell> availableTargets = new List<Cell>();
+        
+        private Cell _topCell, _bottomCell, _leftCell, _rightCell;
 
         private Animator anim;
-        private int paramSpeed;
-        private int paramReload;
+        private int paramSpeed, paramAiming, paramReload, paramShoot, paramDeath;
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
@@ -21,6 +26,10 @@ namespace Characters.Player
 
             anim = GetComponentInChildren<Animator>();
             paramSpeed = Animator.StringToHash("Speed");
+            paramAiming = Animator.StringToHash("Aiming");
+            paramReload = Animator.StringToHash("Reload");
+            paramShoot = Animator.StringToHash("Shoot");
+            paramDeath = Animator.StringToHash("Dead");
         }
 
         private void GetNewCells()
@@ -47,7 +56,22 @@ namespace Characters.Player
 
         protected override void ShowAttackLocations()
         {
+            attackHighlightedCells = new List<Cell>();
+            availableTargets = CharacterActions.GetAvailableDiagonalTargets<EnemyCharacter>(Location, attackHighlightedCells);
             
+            if (availableTargets.Count > 0)
+            {
+                AnimateAttackLocations();
+            }
+        }
+
+        private void AnimateAttackLocations()
+        {
+            foreach (var cell in attackHighlightedCells)
+            {
+                if(availableTargets.Contains(cell)) cell.RedBlink(true, -1);
+                else cell.RedBlink(false, -1);
+            }
         }
 
         protected override void HideLocations()
@@ -60,6 +84,11 @@ namespace Characters.Player
                 _leftCell.DisableHighlight();
             if (_rightCell != null)
                 _rightCell.DisableHighlight();
+
+            foreach (var cell in attackHighlightedCells)
+            {
+                cell.DisableHighlight();
+            }
         }
 
         protected override void Move(Cell cell)
@@ -80,7 +109,43 @@ namespace Characters.Player
             DOVirtual.Vector3(pos, cell.Position, 1, value => transform.position = value);
             DOVirtual.Float(0, 1, 0.5f, value => anim.SetFloat(paramSpeed, value))
                 .SetEase(Ease.InOutCubic)
-                .SetLoops(2, LoopType.Yoyo);
+                .SetLoops(2, LoopType.Yoyo)
+                .OnComplete(() =>
+                {
+                    if (!HasAttacked) ShowAttackLocations();
+                });
+        }
+
+        protected override void Attack(Cell cell)
+        {
+            foreach (var c in attackHighlightedCells)
+            {
+                c.DisableHighlight();
+            }
+            
+            anim.SetBool(paramAiming, true);
+            Vector3 difference = cell.Position - Location.Position;
+            var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
+            DOVirtual.Float(transform.eulerAngles.y, rotY, 1.25f,
+                    value => transform.rotation = Quaternion.Euler(0, value, 0))
+                .OnComplete(() =>
+                {
+                    anim.SetTrigger(paramShoot);
+                    cell.AttackCell(AttackPonints);
+                    CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, cell);
+                    Invoke(nameof(Reload), 0.5f);
+                });
+        }
+
+        private void Reload()
+        {
+            anim.SetTrigger(paramReload);
+            Invoke(nameof(StopAim), 1.2f);
+        }
+
+        private void StopAim()
+        {
+            anim.SetBool(paramAiming, false);
         }
     }
 }

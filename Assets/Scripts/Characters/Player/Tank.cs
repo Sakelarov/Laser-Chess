@@ -110,5 +110,10 @@ namespace Characters.Player
                 .SetEase(Ease.Linear)
                 .OnComplete(() => anim.SetBool(paramRun, false));
         }
+        
+        protected override void Attack(Cell cell)
+        {
+            
+        }
     }
 }

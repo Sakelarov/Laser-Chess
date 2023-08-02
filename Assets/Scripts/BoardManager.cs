@@ -69,6 +69,8 @@ public class BoardManager : MonoBehaviour
 
     private void SetupLevel1()
     {
+        IsPlayerTurn = true;
+        
         playerUnits = new List<PlayerCharacter>
         {
             (PlayerCharacter)SpawnPiece(1, 4, gruntPrefab),
@@ -78,7 +80,7 @@ public class BoardManager : MonoBehaviour
 
         drones = new List<Drone>()
         {
-            (Drone)SpawnPiece(1, 4, dronePrefab)
+            (Drone)SpawnPiece(5, 1, dronePrefab)
         };
     }
 
@@ -150,9 +152,9 @@ public class BoardManager : MonoBehaviour
         yield return new WaitForSeconds(2);
         foreach (var drone in drones)
         {
-            if(drone != null && drone.TryMove())
+            if(drone != null)
             {
-                yield return new WaitForSeconds(1);
+                if (drone.TryMove()) yield return new WaitForSeconds(1);
                 drone.TryAttack();
             }
         }

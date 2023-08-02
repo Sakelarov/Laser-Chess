@@ -11,7 +11,11 @@ public abstract class PlayerCharacter : Character
     {
         base.Setup(cell);
         
-        Bm.ForEachCell(c => c.moveToCell.AddListener(Move));
+        Bm.ForEachCell(c =>
+        {
+            c.moveToCell.AddListener(Move);
+            c.attackCell.AddListener(Attack);
+        });
         Bm.charSelected.AddListener(CheckSelectedCharacter);
     }
 
@@ -42,4 +46,6 @@ public abstract class PlayerCharacter : Character
     protected abstract void HideLocations();
 
     protected abstract void Move(Cell cell);
+    
+    protected abstract void Attack(Cell cell);
 }

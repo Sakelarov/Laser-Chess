@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using Characters.Models;
 using DG.Tweening;
@@ -8,13 +10,27 @@ namespace Characters.Enemy
 {
     public class Drone : EnemyCharacter
     {
+        [SerializeField] private GameObject shotPrefab;
+        [SerializeField] private Transform shotPosition;
+        
         private List<Cell> attackHighlightedCells = new List<Cell>();
         private List<Cell> availableTargets = new List<Cell>();
-        
-        // Define the directions the drone can attack
-        private int[] dr = { 1, -1, 1, -1 };
-        private int[] dc = { 1, 1, -1, -1 };
-        
+
+        private Cell attackTarget;
+
+        private void Start()
+        {
+            SetIdleAnimation();
+        }
+
+        private void SetIdleAnimation()
+        {
+            Transform body = transform.GetChild(0);
+            body.DOLocalMove(body.localPosition - body.up * 0.1f, 2)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+        }
+
         public override bool TryMove()
         {
             var psn = Location.Coordinates;
@@ -54,21 +70,49 @@ namespace Characters.Enemy
 
         public override bool TryAttack()
         {
-            GetAvailableTargets();
+            availableTargets = CharacterActions.GetAvailableDiagonalTargets<PlayerCharacter>(Location);
 
             if (availableTargets.Count > 0)
             {
-                
+                StartCoroutine(AnimateAttack());
             }
 
             return false;
         }
 
-        private void AnimateAttackPath()
+        private IEnumerator AnimateAttack()
         {
-            GetDirectionToTarget(GetTarget());
+            attackTarget = GetTarget();
+            GetDirectionToTarget(attackTarget);
+
+            foreach (var cell in attackHighlightedCells)
+            {
+                cell.RedBlink(false, 2);
+                yield return new WaitForSeconds(0.2f);
+            }
+
+            yield return new WaitForSeconds(0.6f);
             
-            
+            Vector3 difference = attackTarget.Position - Location.Position;
+            var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
+            DOVirtual.Float(transform.eulerAngles.y, rotY, 1.25f, value =>
+                {
+                    transform.rotation = Quaternion.Euler(0, value, 0);
+                })
+                .OnComplete(() =>
+                {
+                    attackTarget.AttackCell(AttackPonints);
+                    CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, attackTarget);
+                    Recoil();
+                });
+        }
+
+        private void Recoil()
+        {
+            var direction = transform.position - transform.forward * 0.3f;
+            transform.DOMove(direction, 0.15f)
+                .SetEase(Ease.InFlash)
+                .SetLoops(2, LoopType.Yoyo);
         }
 
         private Cell GetTarget()
@@ -100,48 +144,17 @@ namespace Characters.Enemy
 
                 while (true)
                 {
-                    var prevCell = BoardManager.TryGetCell(r += rowDir, c += colDir);
-                    if (prevCell != null && prevCell != target)
+                    var nextCell = BoardManager.TryGetCell(r += rowDir, c += colDir);
+                    if (nextCell != null && nextCell != target)
                     {
-                        attackHighlightedCells.Add(prevCell);
+                        attackHighlightedCells.Add(nextCell);
                     }
                     else
                     {
                         break;
                     }
                 }
-            }
-        }
-
-        private void GetAvailableTargets()
-        {
-            var psn = Location.Coordinates;
-            availableTargets = new List<Cell>();
-            
-            for (int i = 0; i < dr.Length; i++)
-            {
-                int r = psn.x;
-                int c = psn.y;
-
-                while (true)
-                {
-                    r += dr[i];
-                    c += dc[i];
-
-                    var cell = BoardManager.TryGetCell(r, c);
-                    if (cell != null)
-                    {
-                        if (cell.IsOccupied)
-                        {
-                            availableTargets.Add(cell);
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                attackHighlightedCells.Add(target);
             }
         }
     }

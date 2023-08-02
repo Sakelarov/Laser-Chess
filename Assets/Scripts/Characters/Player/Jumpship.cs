@@ -88,5 +88,10 @@ namespace Characters.Player
                         .SetEase(Ease.InSine);
                 });
         }
+        
+        protected override void Attack(Cell cell)
+        {
+            
+        }
     }
 }

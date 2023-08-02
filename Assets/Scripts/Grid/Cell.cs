@@ -14,15 +14,18 @@ namespace Grid
         [SerializeField] private Material redMat;
 
         private readonly Vector3 psnCorrection = new Vector3(0, 0.12f, 0);
+        private readonly Color from = new Color(1, 0, 0, 0);
+        private readonly Color to = new Color(1, 0, 0, 0.25f);
         private MeshRenderer highlight;
-        private Character _character;
         private bool _isMovingCell;
         private bool _isAttackingCell;
 
         public bool IsSelected;
-        public bool IsOccupied => _character != null;
+        public bool IsOccupied => Character != null;
+        public Character Character { get; private set; }
         public Vector3 Position { get; private set; }
         public Vector2Int Coordinates { get; private set; }
+        
         [HideInInspector] public UnityEvent<Cell> moveToCell;
         [HideInInspector] public UnityEvent<Cell> attackCell;
         
@@ -41,19 +44,19 @@ namespace Grid
             highlight.gameObject.SetActive(true);
         }
 
-        public void RedHighlight()
+        public void RedBlink(bool isTarget, int loops)
         {
-            _isAttackingCell = true;
-            highlight.material = redMat;
-            highlight.gameObject.SetActive(true);
-        }
-
-        public void RedBlink()
-        {
+            _isAttackingCell = isTarget;
+            
             Material mat = Instantiate(redMat);
-            Color from = new Color(1, 0, 0, 0.25f);
-            Color to = new Color(1, 0, 0, 0);
-            DOVirtual.Color(from,to, 1, value => mat.color = value).SetEase(Ease.InOutCubic)
+            
+            DOVirtual.Color(from, to, 0.65f, value => mat.color = value)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(loops, LoopType.Yoyo)
+                .SetLink(highlight.gameObject, LinkBehaviour.KillOnDisable);
+            
+            highlight.material = mat;
+            highlight.gameObject.SetActive(true);
         }
 
         public void DisableHighlight()
@@ -65,7 +68,7 @@ namespace Grid
 
         public CellState SelectCell()
         {
-            if (IsOccupied && !IsSelected && _character is PlayerCharacter ch)
+            if (IsOccupied && !IsSelected && Character is PlayerCharacter ch)
             {
                 IsSelected = true;
                 BoardManager.Instance.SelectCharacter(ch);
@@ -95,7 +98,12 @@ namespace Grid
 
         public void SetCharacter(Character character)
         {
-            _character = character;
+            Character = character;
+        }
+
+        public void AttackCell(int damage)
+        {
+            
         }
     }
 }
