@@ -105,7 +105,7 @@ namespace Characters.Player
             
             var pos = transform.position;
             anim.SetBool(paramRun, true);
-            float speed = Vector3.Distance(transform.position, cell.Position) * 0.8f;
+            float speed = Vector3.Distance(transform.position, cell.Position) * 0.6f;
             DOVirtual.Vector3(pos, cell.Position, speed, value => transform.position = value)
                 .SetEase(Ease.Linear)
                 .OnComplete(() => anim.SetBool(paramRun, false));

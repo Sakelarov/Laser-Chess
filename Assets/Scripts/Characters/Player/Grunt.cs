@@ -15,14 +15,14 @@ namespace Characters.Player
         private List<Cell> attackHighlightedCells = new List<Cell>();
         private List<Cell> availableTargets = new List<Cell>();
         
-        private Cell _topCell, _bottomCell, _leftCell, _rightCell;
+        private Cell _topCell, _bottomCell, _leftCell, _rightCell; // movement cells
 
         private Animator anim;
         private int paramSpeed, paramAiming, paramReload, paramShoot, paramDeath;
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetNewCells();
+            GetMovementCells();
 
             anim = GetComponentInChildren<Animator>();
             paramSpeed = Animator.StringToHash("Speed");
@@ -32,7 +32,7 @@ namespace Characters.Player
             paramDeath = Animator.StringToHash("Dead");
         }
 
-        private void GetNewCells()
+        private void GetMovementCells()
         {
             var psn = Location.Coordinates;
            
@@ -46,11 +46,11 @@ namespace Characters.Player
         {
             if (_topCell != null && !_topCell.IsOccupied)
                 _topCell.GreenHighlight();
-            if (_bottomCell != null &&!_bottomCell.IsOccupied)
+            if (_bottomCell != null && !_bottomCell.IsOccupied)
                 _bottomCell.GreenHighlight();
-            if (_leftCell != null &&!_leftCell.IsOccupied)
+            if (_leftCell != null && !_leftCell.IsOccupied)
                 _leftCell.GreenHighlight();
-            if (_rightCell != null &&!_rightCell.IsOccupied)
+            if (_rightCell != null && !_rightCell.IsOccupied)
                 _rightCell.GreenHighlight();
         }
 
@@ -103,7 +103,7 @@ namespace Characters.Player
             Location.SetCharacter(null);
             Location = cell;
             cell.SetCharacter(this);
-            GetNewCells();
+            GetMovementCells();
             
             var pos = transform.position;
             DOVirtual.Vector3(pos, cell.Position, 1, value => transform.position = value);
@@ -118,10 +118,10 @@ namespace Characters.Player
 
         protected override void Attack(Cell cell)
         {
-            foreach (var c in attackHighlightedCells)
-            {
-                c.DisableHighlight();
-            }
+            if (!Bm.IsCurrentlySelected(this)) return;
+            
+            HasAttacked = true;
+            HideLocations();
             
             anim.SetBool(paramAiming, true);
             Vector3 difference = cell.Position - Location.Position;
