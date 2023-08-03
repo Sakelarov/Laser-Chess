@@ -13,6 +13,10 @@ public class CharacterActions : MonoBehaviour
     // Define the orthogonal directions
     private static readonly int[] or = { 0, 0, 1, -1 };
     private static readonly int[] oc = { 1, -1, 0, 0 };
+    
+    // Define all possible directions
+    private static readonly int[] ar = { 1, -1, 0, 0, 1, -1, 1, -1 };
+    private static readonly int[] ac = { 0, 0, 1, -1, 1, 1, -1, -1 };
 
     private static int[] dirR;
     private static int[] dirC;
@@ -22,7 +26,8 @@ public class CharacterActions : MonoBehaviour
     public enum DirectionType
     {
         Orthogonal,
-        Diagonal
+        Diagonal,
+        AllDirections
     }
     
 
@@ -31,22 +36,7 @@ public class CharacterActions : MonoBehaviour
         var psn = location.Coordinates;
         var results = new List<Cell>();
 
-        if (dirType == DirectionType.Orthogonal)
-        {
-            dirR = or;
-            dirC = oc;
-        }
-        else if (dirType == DirectionType.Diagonal)
-        {
-            dirR = dr;
-            dirC = oc;
-        }
-
-        if (dirR == null || dirC == null)
-        {
-            Debug.Log("Wrong direction");
-            return null;
-        }
+        GetDirections(dirType);
 
         for (int i = 0; i < dirR.Length; i++)
         {
@@ -80,6 +70,29 @@ public class CharacterActions : MonoBehaviour
         }
 
         return results;
+    }
+    
+    private static void GetDirections(DirectionType dirType)
+    {
+        if (dirType == DirectionType.Orthogonal)
+        {
+            dirR = or;
+            dirC = oc;
+        }
+        else if (dirType == DirectionType.Diagonal)
+        {
+            dirR = dr;
+            dirC = dc;
+        }
+        else if (dirType == DirectionType.AllDirections)
+        {
+            dirR = ar;
+            dirC = ac;
+        }
+        else
+        {
+            Debug.LogError("Wrong direction type");
+        }
     }
 
     private static void GetDirectionToTarget(Vector2Int psn, List<Cell> directionCells, int i, Cell target)

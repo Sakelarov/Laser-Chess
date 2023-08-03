@@ -84,6 +84,11 @@ public class BoardManager : MonoBehaviour
             (Drone)SpawnPiece(4, 7, dronePrefab),
             (Drone)SpawnPiece(3, 2, dronePrefab)
         };
+
+        dreadnoughts = new List<Dreadnought>()
+        {
+            (Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab),
+        };
     }
 
     private static Character SpawnPiece(int row, int col, GameObject prefab)
@@ -117,7 +122,7 @@ public class BoardManager : MonoBehaviour
 
     private bool AllActionsPerformed()
     {
-        return playerUnits.All(unit => unit.HasMoved);
+        return playerUnits.All(unit => unit.HasAttacked);
     }
 
     public void SelectCharacter(PlayerCharacter character)
@@ -156,8 +161,17 @@ public class BoardManager : MonoBehaviour
         {
             if(drone != null)
             {
-                if (drone.TryMove()) yield return new WaitForSeconds(1);
-                drone.TryAttack();
+                if (drone.TryMove()) yield return new WaitForSeconds(2);
+                if (drone.TryAttack()) yield return new WaitForSeconds(2);
+            }
+        }
+        
+        foreach (var dreadnought in dreadnoughts)
+        {
+            if(dreadnought != null)
+            {
+                if (dreadnought.TryMove()) yield return new WaitForSeconds(2);
+                if (dreadnought.TryAttack()) yield return new WaitForSeconds(2);
             }
         }
     }

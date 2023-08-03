@@ -58,11 +58,12 @@ namespace Characters.Player
         {
             attackHighlightedCells = new List<Cell>();
             availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Diagonal, attackHighlightedCells);
-            
+
             if (availableTargets.Count > 0)
             {
                 AnimateAttackLocations();
             }
+            else HasAttacked = true;
         }
 
         private void AnimateAttackLocations()
@@ -112,7 +113,7 @@ namespace Characters.Player
                 .SetLoops(2, LoopType.Yoyo)
                 .OnComplete(() =>
                 {
-                    if (!HasAttacked) ShowAttackLocations();
+                    if (!HasAttacked && Bm.IsCurrentlySelected(this)) ShowAttackLocations();
                 });
         }
 
@@ -126,7 +127,9 @@ namespace Characters.Player
             anim.SetBool(paramAiming, true);
             Vector3 difference = cell.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
-            DOVirtual.Float(transform.eulerAngles.y, rotY, 1.25f,
+            var yAngle = transform.eulerAngles.y;
+            if (yAngle - rotY > 180) rotY += 360;
+            DOVirtual.Float(yAngle, rotY, 1.25f,
                     value => transform.rotation = Quaternion.Euler(0, value, 0))
                 .OnComplete(() =>
                 {

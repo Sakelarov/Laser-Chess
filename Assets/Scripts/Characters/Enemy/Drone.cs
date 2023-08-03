@@ -75,6 +75,7 @@ namespace Characters.Enemy
             if (availableTargets.Count > 0)
             {
                 StartCoroutine(AnimateAttack());
+                return true;
             }
 
             return false;
@@ -95,7 +96,9 @@ namespace Characters.Enemy
             
             Vector3 difference = attackTarget.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
-            DOVirtual.Float(transform.eulerAngles.y, rotY, 1.25f, value =>
+            var yAngle = transform.eulerAngles.y;
+            if (yAngle - rotY > 180) rotY += 360;
+            DOVirtual.Float(yAngle, rotY, 1.25f, value =>
                 {
                     transform.rotation = Quaternion.Euler(0, value, 0);
                 })

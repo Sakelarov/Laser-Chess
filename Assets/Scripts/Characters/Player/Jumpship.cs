@@ -88,6 +88,8 @@ namespace Characters.Player
                 _rightCell.RedBlink(true, -1);
                 attackTargets.Add(_rightCell);
             }
+
+            if (attackTargets.Count == 0) HasAttacked = true;
         }
 
         protected override void HideLocations()
@@ -131,7 +133,7 @@ namespace Characters.Player
                         .SetEase(Ease.InSine)
                         .OnComplete(() =>
                         {
-                            if (!HasAttacked) ShowAttackLocations();
+                            if (!HasAttacked && Bm.IsCurrentlySelected(this)) ShowAttackLocations();
                         });
                 });
         }
