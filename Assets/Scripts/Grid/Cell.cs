@@ -28,6 +28,12 @@ namespace Grid
         
         [HideInInspector] public UnityEvent<Cell> moveToCell;
         [HideInInspector] public UnityEvent<Cell> attackCell;
+
+        // Used by Pathfinder
+        [HideInInspector] public Cell parent;
+        [HideInInspector] public int gCost;
+        [HideInInspector] public int hCost;
+        public int FCost => gCost + hCost;
         
         private void Awake()
         {

@@ -9,8 +9,8 @@ namespace Characters.Models
     {
         protected BoardManager Bm;
         protected Cell Location;
-        protected int HealthPoints;
-        protected int AttackPonints;
+        public int HealthPoints;
+        public int AttackPonints;
         
         public bool HasMoved;
         public bool HasAttacked;
