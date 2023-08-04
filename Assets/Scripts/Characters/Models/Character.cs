@@ -8,12 +8,12 @@ namespace Characters.Models
     public abstract class Character : MonoBehaviour
     {
         protected BoardManager Bm;
-        protected Cell Location;
+        
         public int HealthPoints;
         public int AttackPonints;
-        
-        public bool HasMoved;
-        public bool HasAttacked;
+        public Cell Location { get; protected set; }
+        public bool HasMoved { get; protected set; }
+        public bool HasAttacked { get; protected set; }
         
 
         public virtual void Setup(Cell cell)
@@ -29,5 +29,9 @@ namespace Characters.Models
             HasMoved = false;
             HasAttacked = false;
         }
+
+        public abstract void Die();
+
+        public abstract void GetDamaged();
     }
 }

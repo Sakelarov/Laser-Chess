@@ -74,8 +74,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d37341d0128c9f46a98c5b1eccd166f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HasMoved: 0
-  HasAttacked: 0
+  HealthPoints: 4
+  AttackPonints: 2
   shotPrefab: {fileID: 136330, guid: 9a0c3383523899643a8d0661cfaca4e4, type: 3}
   shotPosition: {fileID: 3845151951719325482}
 --- !u!1001 &1630192327788264252

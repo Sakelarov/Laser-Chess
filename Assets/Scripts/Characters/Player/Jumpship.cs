@@ -113,6 +113,7 @@ namespace Characters.Player
 
             HasMoved = true;
             HideLocations();
+            Bm.HideSelectOverlay();
 
             Location.SetCharacter(null);
             Location = cell;
@@ -134,6 +135,7 @@ namespace Characters.Player
                         .OnComplete(() =>
                         {
                             if (!HasAttacked && Bm.IsCurrentlySelected(this)) ShowAttackLocations();
+                            Bm.ShowSelectOverlay(this);
                         });
                 });
         }
@@ -144,6 +146,7 @@ namespace Characters.Player
             
             HasAttacked = true;
             HideLocations();
+            Bm.HideSelectOverlay();
             
             anim.SetFloat(paramSpeed, 2);
             anim.SetTrigger(paramJump);
@@ -158,7 +161,6 @@ namespace Characters.Player
                         .SetEase(Ease.InSine)
                         .OnComplete(() =>
                         {
-                            cell.AttackCell(AttackPonints);
                             foreach (var target in attackTargets)
                             {
                                 var attack = Instantiate(attackEffect);
@@ -168,8 +170,28 @@ namespace Characters.Player
                                     target == _rightCell ? new Vector3(0, 90, 0) :
                                     target == _leftCell ? new Vector3(0, 270, 0) : new Vector3(0, 0, 0);
                             }
+                            Invoke(nameof(ApplyDamage), 0.45f);
+                            Bm.ShowSelectOverlay(this);
                         });
                 });
+        }
+
+        private void ApplyDamage()
+        {
+            foreach (var target in attackTargets)
+            {
+                target.AttackCell(AttackPonints);
+            }
+        }
+        
+        public override void Die()
+        {
+            
+        }
+
+        public override void GetDamaged()
+        {
+            
         }
     }
 }

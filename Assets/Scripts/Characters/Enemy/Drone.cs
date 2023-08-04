@@ -10,6 +10,7 @@ namespace Characters.Enemy
 {
     public class Drone : EnemyCharacter
     {
+        [SerializeField] private ParticleSystem exhaustSystem;
         [SerializeField] private GameObject shotPrefab;
         [SerializeField] private Transform shotPosition;
         
@@ -17,9 +18,15 @@ namespace Characters.Enemy
         private List<Cell> availableTargets = new List<Cell>();
 
         private Cell attackTarget;
-
-        private void Start()
+        private readonly float moveDuration = 1;
+        private readonly float attackDuration = 1.25f;
+        private readonly float blinkDelay = 0.2f;
+        private readonly float attackDelay = 1f;
+        
+        public override void Setup(Cell cell)
         {
+            base.Setup(cell);
+            
             SetIdleAnimation();
         }
 
@@ -31,7 +38,7 @@ namespace Characters.Enemy
                 .SetLoops(-1, LoopType.Yoyo);
         }
 
-        public override bool TryMove()
+        public override bool TryMove(ref float delay)
         {
             var psn = Location.Coordinates;
             
@@ -40,6 +47,7 @@ namespace Characters.Enemy
             if (targetCell != null && !targetCell.IsOccupied)
             {
                 Move(targetCell);
+                delay = moveDuration;
                 return true;
             }
 
@@ -48,6 +56,7 @@ namespace Characters.Enemy
 
         private void Move(Cell cell)
         {
+            exhaustSystem.Play();
             transform.LookAt(cell.Position);
             
             HasMoved = true;
@@ -59,8 +68,9 @@ namespace Characters.Enemy
             if(cell.Coordinates.x == 0) Invoke(nameof(EnemyWin), 1.5f);
            
             var pos = transform.position;
-            DOVirtual.Vector3(pos, cell.Position, 1, value => transform.position = value)
-                .SetEase(Ease.InOutCubic);
+            DOVirtual.Vector3(pos, cell.Position, moveDuration, value => transform.position = value)
+                .SetEase(Ease.InOutCubic)
+                .OnComplete(() => exhaustSystem.Stop());
         }
 
         private void EnemyWin()
@@ -68,13 +78,19 @@ namespace Characters.Enemy
             Debug.Log("Enemies Win!");
         }
 
-        public override bool TryAttack()
+        public override bool TryAttack(ref float delay)
         {
             availableTargets = CharacterActions.GetAvailableTargets<PlayerCharacter>(Location, CharacterActions.DirectionType.Diagonal);
 
             if (availableTargets.Count > 0)
             {
+                attackTarget = GetTarget();
+                GetDirectionToTarget(attackTarget);
                 StartCoroutine(AnimateAttack());
+
+                delay = Cell.BlinkDuration + attackDelay + attackDuration;
+                foreach (var cell in attackHighlightedCells) delay += blinkDelay;
+
                 return true;
             }
 
@@ -83,22 +99,20 @@ namespace Characters.Enemy
 
         private IEnumerator AnimateAttack()
         {
-            attackTarget = GetTarget();
-            GetDirectionToTarget(attackTarget);
-
             foreach (var cell in attackHighlightedCells)
             {
                 cell.RedBlink(false, 2);
-                yield return new WaitForSeconds(0.2f);
+                yield return new WaitForSeconds(blinkDelay);
             }
 
-            yield return new WaitForSeconds(0.6f);
+            yield return new WaitForSeconds(attackDelay);
             
             Vector3 difference = attackTarget.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
             var yAngle = transform.eulerAngles.y;
             if (yAngle - rotY > 180) rotY += 360;
-            DOVirtual.Float(yAngle, rotY, 1.25f, value =>
+            
+            DOVirtual.Float(yAngle, rotY, attackDuration, value =>
                 {
                     transform.rotation = Quaternion.Euler(0, value, 0);
                 })
@@ -159,6 +173,16 @@ namespace Characters.Enemy
                 }
                 attackHighlightedCells.Add(target);
             }
+        }
+        
+        public override void Die()
+        {
+            
+        }
+
+        public override void GetDamaged()
+        {
+            
         }
     }
 }

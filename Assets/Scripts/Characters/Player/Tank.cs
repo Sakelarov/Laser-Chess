@@ -22,6 +22,7 @@ namespace Characters.Player
         private Animator anim;
         private int paramRun, paramShoot, paramDie;
         private readonly int maxMoveDistance = 3;
+        private Cell attackTarget;
         
         public override void Setup(Cell cell)
         {
@@ -119,6 +120,7 @@ namespace Characters.Player
             
             HasMoved = true;
             HideLocations();
+            Bm.HideSelectOverlay();
             
             Location.SetCharacter(null);
             Location = cell;
@@ -134,6 +136,7 @@ namespace Characters.Player
                 {
                     anim.SetBool(paramRun, false);
                     if (!HasAttacked && Bm.IsCurrentlySelected(this)) ShowAttackLocations();
+                    Bm.ShowSelectOverlay(this);
                 });
         }
         
@@ -143,6 +146,7 @@ namespace Characters.Player
             
             HasAttacked = true;
             HideLocations();
+            Bm.HideSelectOverlay();
             
             Vector3 difference = cell.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
@@ -152,10 +156,29 @@ namespace Characters.Player
                     value => transform.rotation = Quaternion.Euler(0, value, 0))
                 .OnComplete(() =>
                 {
+                    float delay = CharacterActions.GetManhattanDistance(cell, Location);
+                    attackTarget = cell;
+                    Invoke(nameof(ApplyDamage), delay * 0.08f);
+                    
                     anim.SetTrigger(paramShoot);
-                    cell.AttackCell(AttackPonints);
                     CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, cell);
+                    Bm.ShowSelectOverlay(this);
                 });
+        }
+
+        private void ApplyDamage()
+        {
+            attackTarget.AttackCell(AttackPonints);
+        }
+        
+        public override void Die()
+        {
+            
+        }
+
+        public override void GetDamaged()
+        {
+            
         }
     }
 }

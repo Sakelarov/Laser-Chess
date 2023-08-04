@@ -19,6 +19,8 @@ namespace Characters.Player
 
         private Animator anim;
         private int paramSpeed, paramAiming, paramReload, paramShoot, paramDeath;
+
+        private Cell attackTarget;
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
@@ -100,6 +102,7 @@ namespace Characters.Player
             
             HasMoved = true;
             HideLocations();
+            Bm.HideSelectOverlay();
             
             Location.SetCharacter(null);
             Location = cell;
@@ -114,6 +117,7 @@ namespace Characters.Player
                 .OnComplete(() =>
                 {
                     if (!HasAttacked && Bm.IsCurrentlySelected(this)) ShowAttackLocations();
+                    Bm.ShowSelectOverlay(this);
                 });
         }
 
@@ -123,6 +127,7 @@ namespace Characters.Player
             
             HasAttacked = true;
             HideLocations();
+            Bm.HideSelectOverlay();
             
             anim.SetBool(paramAiming, true);
             Vector3 difference = cell.Position - Location.Position;
@@ -133,11 +138,20 @@ namespace Characters.Player
                     value => transform.rotation = Quaternion.Euler(0, value, 0))
                 .OnComplete(() =>
                 {
+                    float delay = Vector2.Distance(cell.Position, Location.Position);
+                    attackTarget = cell;
+                    Invoke(nameof(ApplyDamage), delay * 0.04f);
+                    
                     anim.SetTrigger(paramShoot);
-                    cell.AttackCell(AttackPonints);
                     CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, cell);
                     Invoke(nameof(Reload), 0.5f);
+                    Bm.ShowSelectOverlay(this);
                 });
+        }
+        
+        private void ApplyDamage()
+        {
+            attackTarget.AttackCell(AttackPonints);
         }
 
         private void Reload()
@@ -149,6 +163,16 @@ namespace Characters.Player
         private void StopAim()
         {
             anim.SetBool(paramAiming, false);
+        }
+
+        public override void Die()
+        {
+            
+        }
+
+        public override void GetDamaged()
+        {
+            
         }
     }
 }

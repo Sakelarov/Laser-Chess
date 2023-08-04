@@ -111,6 +111,55 @@ public class CharacterActions : MonoBehaviour
 
         directionCells.Add(target);
     }
+
+    public static List<Cell> GetCellsInManhattanDistance(Cell cell, int manhattanDistance)
+    {
+        var psn = cell.Coordinates;
+        List<Cell> result = new List<Cell>();
+
+        for (int dx = -manhattanDistance; dx <= manhattanDistance; dx++)
+        {
+            for (int dy = -manhattanDistance; dy <= manhattanDistance; dy++)
+            {
+                var currentCell = BoardManager.TryGetCell(psn.x + dx, psn.y + dy);
+                if (currentCell != null && currentCell != cell)
+                {
+                    result.Add(currentCell);
+                }
+            }
+        }
+
+        return result;
+    }
+    
+    private static List<Cell> GetCellsAtManhattanDistance(Cell cell, int manhattanDistance)
+    {
+        var psn = cell.Coordinates;
+        List<Cell> result = new List<Cell>();
+
+        for (int dx = -manhattanDistance; dx <= manhattanDistance; dx++)
+        {
+            for (int dy = -manhattanDistance; dy <= manhattanDistance; dy++)
+            {
+                var currentCell = BoardManager.TryGetCell(psn.x + dx, psn.y + dy);
+                if (currentCell != null && GetManhattanDistance(currentCell, cell) == manhattanDistance)
+                {
+                    result.Add(currentCell);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static int GetManhattanDistance(Cell cell1, Cell cell2)
+    {
+        var c1Psn = cell1.Coordinates;
+        var c2Psn = cell2.Coordinates;
+        int xDistance = Mathf.Abs(c2Psn.x - c1Psn.x);
+        int yDistance = Mathf.Abs(c2Psn.y - c1Psn.y);
+        return Mathf.Max(xDistance, yDistance);
+    }
     
     public static void ShootLaser(Transform chTransform, GameObject shotPrefab, Transform shotPosition, Cell target)
     {

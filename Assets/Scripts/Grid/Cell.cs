@@ -10,22 +10,24 @@ namespace Grid
     [System.Serializable]
     public class Cell : MonoBehaviour
     {
-        [SerializeField] private Material greenMat;
-        [SerializeField] private Material redMat;
-
+        [SerializeField] private Material highlightMat;
+       
         private readonly Vector3 psnCorrection = new Vector3(0, 0.12f, 0);
-        private readonly Color from = new Color(1, 0, 0, 0);
-        private readonly Color to = new Color(1, 0, 0, 0.25f);
+        private readonly Color redTransp = new Color(1, 0, 0, 0);
+        private readonly Color red40 = new Color(1, 0, 0, 0.40f);
+        private readonly Color greenTransp = new Color(0, 1, 0, 0);
+        private readonly Color green25 = new Color(0, 1, 0, 0.25f);
         private MeshRenderer highlight;
         private bool _isMovingCell;
         private bool _isAttackingCell;
 
-        public bool IsSelected;
+        public bool IsSelected { get; private set; }
         public bool IsOccupied => Character != null;
         public Character Character { get; private set; }
         public Vector3 Position { get; private set; }
         public Vector2Int Coordinates { get; private set; }
-        
+        public static float BlinkDuration => 0.65f;
+
         [HideInInspector] public UnityEvent<Cell> moveToCell;
         [HideInInspector] public UnityEvent<Cell> attackCell;
 
@@ -46,7 +48,15 @@ namespace Grid
         public void GreenHighlight()
         {
             _isMovingCell = true;
-            highlight.material = greenMat;
+            
+            Material mat = Instantiate(highlightMat);
+            
+            DOVirtual.Color(greenTransp, green25, BlinkDuration * 2, value => mat.color = value)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetLink(highlight.gameObject, LinkBehaviour.KillOnDisable);
+            
+            highlight.material = mat;
             highlight.gameObject.SetActive(true);
         }
 
@@ -54,9 +64,9 @@ namespace Grid
         {
             _isAttackingCell = isTarget;
             
-            Material mat = Instantiate(redMat);
+            Material mat = Instantiate(highlightMat);
             
-            DOVirtual.Color(from, to, 0.65f, value => mat.color = value)
+            DOVirtual.Color(redTransp, red40, BlinkDuration, value => mat.color = value)
                 .SetEase(Ease.InOutSine)
                 .SetLoops(loops, LoopType.Yoyo)
                 .SetLink(highlight.gameObject, LinkBehaviour.KillOnDisable);
@@ -109,7 +119,19 @@ namespace Grid
 
         public void AttackCell(int damage)
         {
+            if (Character.HealthPoints < damage)
+            {
+                BoardManager.Instance.DisplayDamage(this, Character.HealthPoints);
+                Character.HealthPoints = 0;
+            }
+            else
+            {
+                BoardManager.Instance.DisplayDamage(this, damage);
+                Character.HealthPoints -= damage;
+            } 
             
+            if(Character.HealthPoints == 0) Character.Die();
+            else Character.GetDamaged();
         }
     }
 }
