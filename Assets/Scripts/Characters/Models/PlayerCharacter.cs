@@ -39,13 +39,45 @@ public abstract class PlayerCharacter : Character
         else if (!IsSelected && this == character) this.InvokeAfterFrames(1,SelectCharacter);
     }
 
-    protected abstract void ShowMoveLocations();
+    protected abstract void GetMovementCells();
+    public abstract void ShowMoveLocations();
     
-    protected abstract void ShowAttackLocations();
+    public abstract void ShowAttackLocations();
 
     protected abstract void HideLocations();
 
     protected abstract void Move(Cell cell);
     
     protected abstract void Attack(Cell cell);
+
+    protected virtual void RegisterAttack()
+    {
+        HasMoved = true; // player cant move after attack
+        HasAttacked = true;
+        portrait.DisableAttackIndicator();
+        portrait.DisableMoveIndicator();
+        HideLocations();
+        Bm.HideSelectOverlay();
+        GameUIController.Instance.UpdatePlayerInfo(this);
+    }
+
+    protected virtual void RegisterMove(Cell cell)
+    {
+        HasMoved = true;
+        portrait.DisableMoveIndicator();
+        HideLocations();
+        Bm.HideSelectOverlay();
+        GameUIController.Instance.UpdatePlayerInfo(this);
+            
+        Location.SetCharacter(null);
+        Location = cell;
+        cell.SetCharacter(this);
+        GetMovementCells();
+    }
+
+    public override void Die()
+    {
+        base.Die();
+        GameUIController.Instance.DeactivePlayer(this);
+    }
 }

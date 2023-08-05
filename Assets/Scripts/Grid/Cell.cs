@@ -87,8 +87,6 @@ namespace Grid
             if (IsOccupied && !IsSelected && Character is PlayerCharacter ch)
             {
                 IsSelected = true;
-                BoardManager.Instance.SelectCharacter(ch);
-                
                 return CellState.Select;
             }
 

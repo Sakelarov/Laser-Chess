@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 11468384}
   - component: {fileID: 10825254}
   m_Layer: 0
-  m_Name: shot_prefab
+  m_Name: red_laser
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

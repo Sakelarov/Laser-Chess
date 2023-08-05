@@ -3,6 +3,7 @@ using Characters.Models;
 using DG.Tweening;
 using Grid;
 using UnityEngine;
+using UnityEngine.Android;
 
 namespace Characters.Player
 {
@@ -27,7 +28,7 @@ namespace Characters.Player
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetNewCells();
+            GetMovementCells();
 
             anim = GetComponentInChildren<Animator>();
             paramShoot = Animator.StringToHash("shoot");
@@ -35,7 +36,7 @@ namespace Characters.Player
             paramDie = Animator.StringToHash("death");
         }
 
-        private void GetNewCells()
+        protected override void GetMovementCells()
         {
             var psn = Location.Coordinates;
 
@@ -69,17 +70,19 @@ namespace Characters.Player
                 }
             }
         }
-        protected override void ShowMoveLocations()
+        public override void ShowMoveLocations()
         {
-            GetNewCells();
+            HideLocations();
+            GetMovementCells();
             foreach (var cell in availableMovePositions)
             {
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
             }
         }
         
-        protected override void ShowAttackLocations()
+        public override void ShowAttackLocations()
         {
+            HideLocations();
             attackHighlightedCells = new List<Cell>();
             availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Orthogonal, attackHighlightedCells);
             
@@ -118,14 +121,7 @@ namespace Characters.Player
             
             transform.LookAt(cell.Position);
             
-            HasMoved = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
-            
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
-            GetNewCells();
+            RegisterMove(cell);
             
             var pos = transform.position;
             anim.SetBool(paramRun, true);
@@ -144,9 +140,7 @@ namespace Characters.Player
         {
             if (!Bm.IsCurrentlySelected(this)) return;
             
-            HasAttacked = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
+            RegisterAttack();
             
             Vector3 difference = cell.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
@@ -173,12 +167,14 @@ namespace Characters.Player
         
         public override void Die()
         {
-            
+            anim.SetTrigger(paramDie);
+            base.Die();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdatePlayerInfo(this);
+            // TODO: Add animation for getting damaged
         }
     }
 }

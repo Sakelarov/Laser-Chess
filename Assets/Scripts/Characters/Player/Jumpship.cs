@@ -8,6 +8,7 @@ namespace Characters.Player
 {
     public class Jumpship : PlayerCharacter
     {
+        [SerializeField] private ParticleSystem sparks;
         [SerializeField] private GameObject attackEffect;
         private List<Cell> attackTargets = new List<Cell>();
         private Cell _topCell, _bottomCell, _leftCell, _rightCell;
@@ -15,22 +16,20 @@ namespace Characters.Player
         private Cell[] availableMovePositions = new Cell[8];
 
         private Animator anim;
-        private int paramShoot, paramJump, paramDie, paramReload, paramSpeed;
+        private int paramJump, paramDie, paramSpeed;
 
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetNewCells();
+            GetMovementCells();
 
             anim = GetComponentInChildren<Animator>();
-            paramShoot = Animator.StringToHash("shoot");
             paramJump = Animator.StringToHash("jump");
             paramDie = Animator.StringToHash("die");
-            paramReload = Animator.StringToHash("reload");
             paramSpeed = Animator.StringToHash("speed");
         }
     
-        private void GetNewCells()
+        protected override void GetMovementCells()
         {
             var psn = Location.Coordinates;
             
@@ -44,8 +43,10 @@ namespace Characters.Player
             availableMovePositions[7] = BoardManager.TryGetCell(psn.x - 2, psn.y - 1);
         }
     
-        protected override void ShowMoveLocations()
+        public override void ShowMoveLocations()
         {
+            HideLocations();
+            
             foreach (var cell in availableMovePositions)
             {
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
@@ -62,8 +63,9 @@ namespace Characters.Player
             _rightCell = BoardManager.TryGetCell(psn.x, psn.y + 1);
         }
         
-        protected override void ShowAttackLocations()
+        public override void ShowAttackLocations()
         {
+            HideLocations();
             GetAttackCells();
 
             attackTargets = new List<Cell>();
@@ -111,14 +113,7 @@ namespace Characters.Player
             
             transform.LookAt(cell.Position);
 
-            HasMoved = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
-
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
-            GetNewCells();
+            RegisterMove(cell);
 
             anim.SetFloat(paramSpeed, 1);
             anim.SetTrigger(paramJump);
@@ -144,9 +139,7 @@ namespace Characters.Player
         {
             if (!Bm.IsCurrentlySelected(this)) return;
             
-            HasAttacked = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
+            RegisterAttack();
             
             anim.SetFloat(paramSpeed, 2);
             anim.SetTrigger(paramJump);
@@ -186,12 +179,15 @@ namespace Characters.Player
         
         public override void Die()
         {
-            
+            anim.SetTrigger(paramDie);
+            sparks.Play();
+            base.Die();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdatePlayerInfo(this);
+            sparks.Play();
         }
     }
 }

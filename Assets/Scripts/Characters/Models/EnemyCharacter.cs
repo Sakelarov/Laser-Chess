@@ -14,5 +14,22 @@ namespace Characters.Models
         public abstract bool TryMove(ref float delay);
         
         public abstract bool TryAttack(ref float delay);
+        
+        protected virtual void RegisterMove(Cell cell)
+        {
+            transform.LookAt(cell.Position);
+            HasMoved = true;
+            portrait.DisableMoveIndicator();
+            Location.SetCharacter(null);
+            Location = cell;
+            cell.SetCharacter(this);
+            GameUIController.Instance.UpdateEnemyInfo(this);
+        }
+        
+        public override void Die()
+        {
+            base.Die();
+            GameUIController.Instance.DeactiveEnemy(this);
+        }
     }
 }

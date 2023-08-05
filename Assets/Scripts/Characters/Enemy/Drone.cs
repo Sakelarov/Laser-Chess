@@ -11,8 +11,10 @@ namespace Characters.Enemy
     public class Drone : EnemyCharacter
     {
         [SerializeField] private ParticleSystem exhaustSystem;
+        [SerializeField] private ParticleSystem sparks;
         [SerializeField] private GameObject shotPrefab;
         [SerializeField] private Transform shotPosition;
+        [SerializeField] private GameObject link;
         
         private List<Cell> attackHighlightedCells = new List<Cell>();
         private List<Cell> availableTargets = new List<Cell>();
@@ -22,12 +24,17 @@ namespace Characters.Enemy
         private readonly float attackDuration = 1.25f;
         private readonly float blinkDelay = 0.2f;
         private readonly float attackDelay = 1f;
+
+        private Rigidbody rb;
+        private BoxCollider coll;
         
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
             
             SetIdleAnimation();
+            rb = GetComponentInChildren<Rigidbody>();
+            coll = GetComponentInChildren<BoxCollider>();
         }
 
         private void SetIdleAnimation()
@@ -35,7 +42,8 @@ namespace Characters.Enemy
             Transform body = transform.GetChild(0);
             body.DOLocalMove(body.localPosition - body.up * 0.1f, 2)
                 .SetEase(Ease.InOutSine)
-                .SetLoops(-1, LoopType.Yoyo);
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetLink(link, LinkBehaviour.KillOnDisable);
         }
 
         public override bool TryMove(ref float delay)
@@ -56,26 +64,23 @@ namespace Characters.Enemy
 
         private void Move(Cell cell)
         {
+            RegisterMove(cell);
+
             exhaustSystem.Play();
-            transform.LookAt(cell.Position);
             
-            HasMoved = true;
-           
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
-            
-            if(cell.Coordinates.x == 0) Invoke(nameof(EnemyWin), 1.5f);
-           
             var pos = transform.position;
             DOVirtual.Vector3(pos, cell.Position, moveDuration, value => transform.position = value)
                 .SetEase(Ease.InOutCubic)
-                .OnComplete(() => exhaustSystem.Stop());
+                .OnComplete(() =>
+                {
+                    exhaustSystem.Stop();
+                    CheckWinCondition();
+                });
         }
 
-        private void EnemyWin()
+        private void CheckWinCondition()
         {
-            Debug.Log("Enemies Win!");
+            if(Location.Coordinates.x == 0) Bm.EnemyWin();
         }
 
         public override bool TryAttack(ref float delay)
@@ -106,6 +111,10 @@ namespace Characters.Enemy
             }
 
             yield return new WaitForSeconds(attackDelay);
+
+            HasAttacked = true;
+            portrait.DisableAttackIndicator();
+            GameUIController.Instance.UpdateEnemyInfo(this);
             
             Vector3 difference = attackTarget.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
@@ -118,10 +127,17 @@ namespace Characters.Enemy
                 })
                 .OnComplete(() =>
                 {
-                    attackTarget.AttackCell(AttackPonints);
+                    float delay = Vector2.Distance(attackTarget.Position, Location.Position);
+                    Invoke(nameof(ApplyDamage), delay * 0.01f);
+                    
                     CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, attackTarget);
                     Recoil();
                 });
+        }
+
+        private void ApplyDamage()
+        {
+            attackTarget.AttackCell(AttackPonints);
         }
 
         private void Recoil()
@@ -177,12 +193,19 @@ namespace Characters.Enemy
         
         public override void Die()
         {
+            sparks.Play();
             
+            rb.isKinematic = false;
+            coll.enabled = true;
+            link.SetActive(false);
+            
+            base.Die();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdateEnemyInfo(this);
+            sparks.Play();
         }
     }
 }

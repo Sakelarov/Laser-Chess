@@ -8,13 +8,14 @@ namespace Characters.Models
     public abstract class Character : MonoBehaviour
     {
         protected BoardManager Bm;
-        
+
+        public UnitPortrait portrait;
         public int HealthPoints;
         public int AttackPonints;
         public Cell Location { get; protected set; }
         public bool HasMoved { get; protected set; }
         public bool HasAttacked { get; protected set; }
-        
+        public bool IsDead => HealthPoints <= 0;
 
         public virtual void Setup(Cell cell)
         {
@@ -28,9 +29,15 @@ namespace Characters.Models
         {
             HasMoved = false;
             HasAttacked = false;
+            portrait.ResetTurn();
         }
 
-        public abstract void Die();
+        public virtual void Die()
+        {
+            Location.SetCharacter(null);
+            Destroy(gameObject, 2.5f);
+            portrait.Hide();
+        }
 
         public abstract void GetDamaged();
     }

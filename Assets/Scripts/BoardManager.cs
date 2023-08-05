@@ -8,6 +8,7 @@ using Characters.Models;
 using Grid;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 public class BoardManager : MonoBehaviour
 {
@@ -40,6 +41,7 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private ParticleSystem selectParticle;
 
     private Camera cam;
+    private EventSystem eventSys;
     private RaycastHit hit;
     private Cell selectedCell;
     private PlayerCharacter currentPlayer;
@@ -50,6 +52,8 @@ public class BoardManager : MonoBehaviour
     private static readonly int boardSize = 8;
     private static readonly float constantDelay = 1;
 
+    public enum LevelType { None, Level1, Level2, Level3, }
+
     public static Board board;
     public bool IsPlayerTurn { get; private set; }
     [HideInInspector] public UnityEvent<PlayerCharacter> charSelected;
@@ -57,9 +61,8 @@ public class BoardManager : MonoBehaviour
     private void Start()
     {
         cam = Camera.main;
+        eventSys = EventSystem.current;
         board = GetComponentInChildren<Board>();
-
-        SetupLevel1();
     }
 
     public void ForEachCell(Action<Cell> action)
@@ -73,42 +76,29 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    private void SetupLevel1()
+    public void StartLevel(LevelType level)
     {
-        IsPlayerTurn = true;
+        GameUIController.Instance.SetupGameView();
         
-        playerUnits = new List<PlayerCharacter>
+        switch (level)
         {
-            (PlayerCharacter)SpawnPiece(1, 4, gruntPrefab),
-            (PlayerCharacter)SpawnPiece(1, 2, jumpshipPrefab),
-            (PlayerCharacter)SpawnPiece(4, 4, tankPrefab)
-        };
-
-        drones = new List<Drone>()
-        {
-            (Drone)SpawnPiece(4, 1, dronePrefab),
-            (Drone)SpawnPiece(4, 7, dronePrefab),
-            (Drone)SpawnPiece(3, 2, dronePrefab)
-        };
-
-        dreadnoughts = new List<Dreadnought>()
-        {
-            (Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab),
-        };
-
-        commandUnits = new List<CommandUnit>()
-        {
-            (CommandUnit)SpawnPiece(7, 3, commandUnitPrefab),
-        };
+            case LevelType.Level1 : StartCoroutine(SetupLevel1()); break;
+            //case LevelType.Level2 : StartCoroutine(SetupLevel1()); break;
+            //case LevelType.Level3 : StartCoroutine(SetupLevel1()); break;
+        }
     }
 
     private static Character SpawnPiece(int row, int col, GameObject prefab)
     {
         var spawnCell = board[row, col];
         var piece = Instantiate(prefab);
+        
         var character = piece.GetComponent<Character>();
         character.Setup(spawnCell);
         spawnCell.SetCharacter(character);
+        
+        GameUIController.Instance.SpawnCharacter(character);
+        
         return character;
     }
 
@@ -117,6 +107,28 @@ public class BoardManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0)) TrySelectCell(Input.mousePosition);
         
         if (IsPlayerTurn && AllActionsPerformed()) EndPlayerTurn();
+        
+        // if (Input.GetMouseButtonDown(0))
+        // {
+        //     Debug.Log(EventSystem.current.currentSelectedGameObject.name);
+        // }
+
+        // if (Input.GetMouseButton(0))
+        // {
+        //     PointerEventData pointer = new PointerEventData(EventSystem.current);
+        //     pointer.position = Input.mousePosition;
+        //
+        //     List<RaycastResult> raycastResults = new List<RaycastResult>();
+        //     EventSystem.current.RaycastAll(pointer, raycastResults);
+        //
+        //     if (raycastResults.Count > 0)
+        //     {
+        //         foreach (var go in raycastResults)
+        //         {
+        //             Debug.Log(go.gameObject.name, go.gameObject);
+        //         }
+        //     }
+        // }
     }
     
     private void TrySelectCell(Vector3 position)
@@ -124,13 +136,18 @@ public class BoardManager : MonoBehaviour
         if (!IsPlayerTurn) return;
         
         Physics.Raycast(cam.ScreenPointToRay(position), out hit, Mathf.Infinity);
-        if (hit.collider.TryGetComponent( out Cell cell))
+        if (hit.collider != null && hit.collider.TryGetComponent( out Cell cell))
         {
-            ForEachCell(c => c.UnSelectCell());
-            
-            if (cell.SelectCell() == CellState.Select) selectedCell = cell;
+            UnselectAllCells();
+
+            if (cell.SelectCell() == CellState.Select) SelectCharacter((PlayerCharacter)cell.Character);
             else selectedCell = null;
         }
+    }
+
+    public void UnselectAllCells()
+    {
+        ForEachCell(c => c.UnSelectCell());
     }
 
     private bool AllActionsPerformed()
@@ -140,7 +157,9 @@ public class BoardManager : MonoBehaviour
 
     public void SelectCharacter(PlayerCharacter character)
     {
+        selectedCell = character.Location;
         currentPlayer = character;
+        currentPlayer.portrait.Select();
         charSelected.Invoke(character);
         
         selectTr.gameObject.SetActive(true);
@@ -201,7 +220,7 @@ public class BoardManager : MonoBehaviour
         float delay = 0;
         foreach (var drone in drones)
         {
-            if(drone != null)
+            if(drone != null && !drone.IsDead)
             {
                 if (drone.TryMove(ref delay)) yield return new WaitForSeconds(delay + constantDelay);
                 if (drone.TryAttack(ref delay)) yield return new WaitForSeconds(delay+ constantDelay);
@@ -210,7 +229,7 @@ public class BoardManager : MonoBehaviour
         
         foreach (var dreadnought in dreadnoughts)
         {
-            if(dreadnought != null)
+            if(dreadnought != null && !dreadnought.IsDead)
             {
                 if (dreadnought.TryMove(ref delay)) yield return new WaitForSeconds(delay + constantDelay);
                 if (dreadnought.TryAttack(ref delay)) yield return new WaitForSeconds(delay + constantDelay);
@@ -219,7 +238,7 @@ public class BoardManager : MonoBehaviour
 
         foreach (var cUnit in commandUnits)
         {
-            if (cUnit != null)
+            if (cUnit != null && !cUnit.IsDead)
             {
                 if (cUnit.TryMove(ref delay)) yield return new WaitForSeconds(delay + constantDelay);
             }
@@ -236,4 +255,55 @@ public class BoardManager : MonoBehaviour
         var dmgController = dmg.GetComponent<DamageReduction>();
         dmgController.Setup(amount);
     }
+
+    public void EnemyWin()
+    {
+        Debug.Log("Enemy Wins");
+    }
+
+    public void CheckPlayerWin()
+    {
+        bool hasCommandUnits = false;
+
+        foreach (var unit in commandUnits)
+        {
+            if (unit != null)
+            {
+                hasCommandUnits = true;
+                break;
+            }
+        }
+        
+        if(!hasCommandUnits) Debug.Log("Player Wins");
+    }
+    
+    #region Levels
+    
+    private IEnumerator SetupLevel1()
+    {
+        playerUnits = new List<PlayerCharacter>();
+        yield return new WaitForSeconds(0.2f);
+        playerUnits.Add((PlayerCharacter)SpawnPiece(1, 4, gruntPrefab));
+        yield return new WaitForSeconds(0.2f);
+        playerUnits.Add((PlayerCharacter)SpawnPiece(1, 2, jumpshipPrefab));
+        yield return new WaitForSeconds(0.2f);
+        playerUnits.Add((PlayerCharacter)SpawnPiece(4, 4, tankPrefab));
+        yield return new WaitForSeconds(1.0f);
+
+        drones = new List<Drone>();
+        drones.Add((Drone)SpawnPiece(4, 1, dronePrefab));
+        yield return new WaitForSeconds(0.2f);
+        drones.Add((Drone)SpawnPiece(3, 2, dronePrefab));
+        yield return new WaitForSeconds(0.2f);
+
+        dreadnoughts = new List<Dreadnought>();
+        dreadnoughts.Add((Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab));
+        yield return new WaitForSeconds(0.2f);
+
+        commandUnits = new List<CommandUnit>() { (CommandUnit)SpawnPiece(7, 3, commandUnitPrefab) };
+
+        IsPlayerTurn = true;
+    }
+    
+    #endregion
 }

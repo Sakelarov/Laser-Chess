@@ -33,7 +33,7 @@ namespace Characters.Enemy
         private Cell leftCell, rightCell;
         private bool canMoveLeft, canMoveRight;
 
-        private Dictionary<MoveType, MovePriotiy> moveTypes = new Dictionary<MoveType, MovePriotiy>();
+        private Dictionary<MoveType, int> moveTypes = new Dictionary<MoveType, int>();
         
         private Animator anim;
         private int paramRun, paramDeath, paramDamage;
@@ -72,13 +72,7 @@ namespace Characters.Enemy
 
             if (moveTypes.Count > 0)
             {
-                Dictionary<MoveType, int> moveWeights = new Dictionary<MoveType, int>() { { MoveType.Stay, 0 }, { MoveType.Left, 0 }, { MoveType.Right, 0 }};
-                foreach (var moveType in moveTypes)
-                {
-                    moveWeights[moveType.Key] += (int)moveType.Value;
-                }
-                
-                var direction = moveWeights.OrderByDescending(x => x.Value).First(x => x.Value > 0);
+                var direction = moveTypes.OrderByDescending(x => x.Value).First(x => x.Value > 0);
 
                 if (direction.Key == MoveType.Right)
                 {
@@ -116,7 +110,7 @@ namespace Characters.Enemy
 
         private void GetMoveTypes()
         {
-            moveTypes = new Dictionary<MoveType, MovePriotiy>();
+            moveTypes = new Dictionary<MoveType, int>();
             
             foreach (var grunt in grunts) GetGruntMoves(grunt);
             foreach (var jumpship in jumpships) GetJumpshipMoves(jumpship);
@@ -193,10 +187,10 @@ namespace Characters.Enemy
             }
         }
 
-        private void AddStay(MovePriotiy priotiy)
+        private void AddStay(MovePriotiy priority)
         {
-            moveTypes.Add(MoveType.Stay, priotiy);
-            Debug.Log("stay");
+            if (moveTypes.ContainsKey(MoveType.Stay)) moveTypes[MoveType.Stay] += (int)priority;
+            else moveTypes.Add(MoveType.Stay, (int)priority);
         }
 
         private bool TryGoClose(Vector2Int enemy, Vector2Int ownPsn, MovePriotiy priority)
@@ -220,20 +214,20 @@ namespace Characters.Enemy
         {
             if (canMoveLeft)
             {
-                moveTypes.Add(MoveType.Left, priority);
-                Debug.Log("left");
+                if (moveTypes.ContainsKey(MoveType.Left)) moveTypes[MoveType.Left] += (int)priority;
+                else moveTypes.Add(MoveType.Left, (int)priority);
                 return true;
             }
 
             return false;
         }
 
-        private bool TryAddRight(MovePriotiy priotiy)
+        private bool TryAddRight(MovePriotiy priority)
         {
             if (canMoveRight)
             {
-                moveTypes.Add(MoveType.Right, priotiy);
-                Debug.Log("right");
+                if (moveTypes.ContainsKey(MoveType.Right)) moveTypes[MoveType.Right] += (int)priority;
+                else moveTypes.Add(MoveType.Right, (int)priority);
                 return true;
             }
 
@@ -249,13 +243,7 @@ namespace Characters.Enemy
 
         private void Move(Cell cell)
         {
-            transform.LookAt(cell.Position);
-            
-            HasMoved = true;
-           
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
+            RegisterMove(cell);
             
             anim.SetBool(paramRun, true);
             var pos = transform.position;
@@ -271,12 +259,15 @@ namespace Characters.Enemy
         
         public override void Die()
         {
-            
+            base.Die();
+            anim.SetTrigger(paramDeath);
+            Bm.CheckPlayerWin();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdateEnemyInfo(this);
+            anim.SetTrigger(paramDamage);
         }
     }
 }

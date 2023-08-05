@@ -11,6 +11,7 @@ namespace Characters.Enemy
 {
     public class Dreadnought : EnemyCharacter
     {
+        [SerializeField] private ParticleSystem sparks;
         [SerializeField] private ParticleSystem flameThrower;
         private List<Cell> closestPlayerCharacters = new List<Cell>();
         private List<Cell> availableTargets = new List<Cell>();
@@ -153,13 +154,7 @@ namespace Characters.Enemy
         
         private void Move(Cell cell)
         {
-            transform.LookAt(cell.Position);
-            
-            HasMoved = true;
-           
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
+            RegisterMove(cell);
             
             anim.SetBool(paramWalk, true);
             var pos = transform.position;
@@ -216,6 +211,10 @@ namespace Characters.Enemy
             }
             
             yield return new WaitForSeconds(attackDelay);
+
+            HasAttacked = true;
+            portrait.DisableAttackIndicator();
+            GameUIController.Instance.UpdateEnemyInfo(this);
             
             anim.SetBool(paramAttack, true);
             flameThrower.Play();
@@ -228,8 +227,10 @@ namespace Characters.Enemy
                 {
                     foreach (var cell in cellsAtDistance1)
                     {
-                        if (cell.IsOccupied && cell.Character is PlayerCharacter) 
+                        if (cell.IsOccupied && cell.Character is PlayerCharacter ch)
+                        {
                             cell.AttackCell(AttackPonints);
+                        }
                     }
                     flameThrower.Stop();
                     anim.SetBool(paramAttack, false);
@@ -238,12 +239,16 @@ namespace Characters.Enemy
         
         public override void Die()
         {
-            
+            sparks.Play();
+            anim.SetTrigger(paramDeath);
+            base.Die();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdateEnemyInfo(this);
+            sparks.Play();
+            anim.SetTrigger(paramDamage);
         }
     }
 }

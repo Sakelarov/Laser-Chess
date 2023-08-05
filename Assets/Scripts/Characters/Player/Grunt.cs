@@ -34,7 +34,7 @@ namespace Characters.Player
             paramDeath = Animator.StringToHash("Dead");
         }
 
-        private void GetMovementCells()
+        protected override void GetMovementCells()
         {
             var psn = Location.Coordinates;
            
@@ -44,8 +44,10 @@ namespace Characters.Player
             _rightCell = BoardManager.TryGetCell(psn.x, psn.y + 1);
         }
 
-        protected override void ShowMoveLocations()
+        public override void ShowMoveLocations()
         {
+            HideLocations();
+            
             if (_topCell != null && !_topCell.IsOccupied)
                 _topCell.GreenHighlight();
             if (_bottomCell != null && !_bottomCell.IsOccupied)
@@ -56,8 +58,10 @@ namespace Characters.Player
                 _rightCell.GreenHighlight();
         }
 
-        protected override void ShowAttackLocations()
+        public override void ShowAttackLocations()
         {
+            HideLocations();
+            
             attackHighlightedCells = new List<Cell>();
             availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Diagonal, attackHighlightedCells);
 
@@ -99,16 +103,9 @@ namespace Characters.Player
             if (!Bm.IsCurrentlySelected(this)) return;
             
             transform.LookAt(cell.Position);
-            
-            HasMoved = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
-            
-            Location.SetCharacter(null);
-            Location = cell;
-            cell.SetCharacter(this);
-            GetMovementCells();
-            
+
+            RegisterMove(cell);
+
             var pos = transform.position;
             DOVirtual.Vector3(pos, cell.Position, 1, value => transform.position = value);
             DOVirtual.Float(0, 1, 0.5f, value => anim.SetFloat(paramSpeed, value))
@@ -124,10 +121,8 @@ namespace Characters.Player
         protected override void Attack(Cell cell)
         {
             if (!Bm.IsCurrentlySelected(this)) return;
-            
-            HasAttacked = true;
-            HideLocations();
-            Bm.HideSelectOverlay();
+
+            RegisterAttack();
             
             anim.SetBool(paramAiming, true);
             Vector3 difference = cell.Position - Location.Position;
@@ -140,7 +135,7 @@ namespace Characters.Player
                 {
                     float delay = Vector2.Distance(cell.Position, Location.Position);
                     attackTarget = cell;
-                    Invoke(nameof(ApplyDamage), delay * 0.04f);
+                    Invoke(nameof(ApplyDamage), delay * 0.08f);
                     
                     anim.SetTrigger(paramShoot);
                     CharacterActions.ShootLaser(transform, shotPrefab, shotPosition, cell);
@@ -167,12 +162,14 @@ namespace Characters.Player
 
         public override void Die()
         {
-            
+            anim.SetTrigger(paramDeath);
+            base.Die();
         }
 
         public override void GetDamaged()
         {
-            
+            GameUIController.Instance.UpdatePlayerInfo(this);
+            // TODO: Add animation for getting damaged
         }
     }
 }
