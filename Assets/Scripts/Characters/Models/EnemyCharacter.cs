@@ -20,9 +20,9 @@ namespace Characters.Models
             transform.LookAt(cell.Position);
             HasMoved = true;
             portrait.DisableMoveIndicator();
-            portrait.UpdatePosition();
             Location.SetCharacter(null);
             Location = cell;
+            portrait.UpdatePosition();
             cell.SetCharacter(this);
             GameUIController.Instance.UpdateEnemyDisplay(this);
         }

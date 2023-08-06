@@ -29,6 +29,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button creditsBtn;
     [SerializeField] private Button exitBtn;
 
+    [SerializeField] private CustomLevelsPopup customLevelsPopup;
+
     private RectTransform[] leftBtns = new RectTransform[3];
     private RectTransform[] rightBtns = new RectTransform[3];
     private readonly Vector3 reducedScale = new Vector3(1, 0.5f, 1);
@@ -63,7 +65,7 @@ public class MainMenuController : MonoBehaviour
         exitBtn.onClick.AddListener(Application.Quit);
     }
 
-    private void CloseMainMenu(Action onComplete)
+    public void CloseMainMenu(Action onComplete)
     {
         madeBy.SetActive(false);
         UIEffects.PanelCloseTransition(title, 2);
@@ -125,7 +127,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OpenCustomLevelsPopUp()
     {
-        
+        customLevelsPopup.OpenPopup(null);
     }
 
     private void OpenCredits()

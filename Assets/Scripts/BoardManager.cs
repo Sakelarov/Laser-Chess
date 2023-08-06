@@ -1,14 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Characters;
 using Characters.Enemy;
 using Characters.Models;
 using Grid;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
+using Random = UnityEngine.Random;
 
 public class BoardManager : MonoBehaviour
 {
@@ -28,22 +26,13 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    [SerializeField] private GameObject gruntPrefab;
-    [SerializeField] private GameObject jumpshipPrefab;
-    [SerializeField] private GameObject tankPrefab;
-    [SerializeField] private GameObject dronePrefab;
-    [SerializeField] private GameObject dreadnoughtPrefab;
-    [SerializeField] private GameObject commandUnitPrefab;
-
     [SerializeField] private GameObject damagePrefab;
 
     [SerializeField] private Transform selectTr;
     [SerializeField] private ParticleSystem selectParticle;
 
     private Camera cam;
-    private EventSystem eventSys;
     private RaycastHit hit;
-    private Cell selectedCell;
     private PlayerCharacter currentPlayer;
     private List<PlayerCharacter> playerUnits = new List<PlayerCharacter>();
     private List<EnemyCharacter> enemyUnits = new List<EnemyCharacter>();
@@ -53,21 +42,22 @@ public class BoardManager : MonoBehaviour
     private IEnumerator levelSpawner;
     private static readonly int boardSize = 8;
     private static readonly float constantDelay = 1;
+    private int[] unitsAmounts;
 
-    public enum LevelType { None, Level1, Level2, Level3, }
+    public enum LevelType { None, Level1, Level2, Level3, Chess, GruntWar, ThreeManArmy, Hardcore, Custom}
 
     private LevelType currentLevel = LevelType.None;
 
     public static Board board;
-    public bool IsPlayerTurn { get; private set; }
+    public bool IsPlayerTurn { get; set; }
     [HideInInspector] public UnityEvent<PlayerCharacter> charSelected;
     [HideInInspector] public UnityEvent allEnemiesSpawned;
 
     private void Start()
     {
         cam = Camera.main;
-        eventSys = EventSystem.current;
         board = GetComponentInChildren<Board>();
+        LevelInfo.Init();
     }
 
     public void ForEachCell(Action<Cell> action)
@@ -81,16 +71,39 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    public void StartLevel(LevelType level, bool showGameView = true)
+    public void StartLevel(LevelType level, bool showGameView = true, int[] unitsQuantity = null)
     {
         if (showGameView) GameUIController.Instance.SetupGameView();
 
         currentLevel = level;
+
+        playerUnits = new List<PlayerCharacter>();
+        enemyUnits = new List<EnemyCharacter>();
+        drones = new List<Drone>();
+        dreadnoughts = new List<Dreadnought>();
+        commandUnits = new List<CommandUnit>();
         switch (level)
         {
-            case LevelType.Level1 : levelSpawner = SetupLevel1(); break;
-            //case LevelType.Level2 : StartCoroutine(SetupLevel1()); break;
-            //case LevelType.Level3 : StartCoroutine(SetupLevel1()); break;
+            case LevelType.Level1 : levelSpawner = LevelInfo.SetupLevel1(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.Level2 : levelSpawner = LevelInfo.SetupLevel2(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.Level3 : levelSpawner = LevelInfo.SetupLevel3(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.Chess : levelSpawner = LevelInfo.ClassicalChess(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.GruntWar : levelSpawner = LevelInfo.GruntsWar(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.ThreeManArmy : levelSpawner = LevelInfo.ThreeManArmy(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.Hardcore : levelSpawner = LevelInfo.HardcoreLevel(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
+            case LevelType.Custom:
+            {
+                if (unitsQuantity != null)
+                {
+                    this.unitsAmounts = unitsQuantity;
+                    levelSpawner = LevelInfo.Custom(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned, unitsQuantity);
+                }
+                else
+                {
+                    levelSpawner = LevelInfo.Custom(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned, this.unitsAmounts);
+                }
+                break;
+            }
         }
 
         StartCoroutine(levelSpawner);
@@ -120,7 +133,7 @@ public class BoardManager : MonoBehaviour
         GameUIController.Instance.ResetGameUI();
     }
 
-    private static Character SpawnPiece(int row, int col, GameObject prefab)
+    public static Character SpawnPiece(int row, int col, GameObject prefab)
     {
         var spawnCell = board[row, col];
         var piece = Instantiate(prefab);
@@ -134,33 +147,29 @@ public class BoardManager : MonoBehaviour
         return character;
     }
 
+    public Cell GetRandomPlayerSpawnCell()
+    {
+        while (true)
+        {
+            int randomX = Random.Range(0, 2);
+            int randomY = Random.Range(0, 8);
+            if (!board[randomX, randomY].IsOccupied) return board[randomX, randomY];
+        }
+    }
+    
+    public Cell GetRandomEnemySpawnCell()
+    {
+        while (true)
+        {
+            int randomX = Random.Range(4, 8);
+            int randomY = Random.Range(0, 8);
+            if (!board[randomX, randomY].IsOccupied) return board[randomX, randomY];
+        }
+    }
+
     private void Update()
     {
         if (Input.GetMouseButtonDown(0) && Time.timeScale > 0.1f) TrySelectCell(Input.mousePosition);
-        
-        //if (IsPlayerTurn && AllActionsPerformed()) EndPlayerTurn();
-        
-        // if (Input.GetMouseButtonDown(0))
-        // {
-        //     Debug.Log(EventSystem.current.currentSelectedGameObject.name);
-        // }
-
-        // if (Input.GetMouseButton(0))
-        // {
-        //     PointerEventData pointer = new PointerEventData(EventSystem.current);
-        //     pointer.position = Input.mousePosition;
-        //
-        //     List<RaycastResult> raycastResults = new List<RaycastResult>();
-        //     EventSystem.current.RaycastAll(pointer, raycastResults);
-        //
-        //     if (raycastResults.Count > 0)
-        //     {
-        //         foreach (var go in raycastResults)
-        //         {
-        //             Debug.Log(go.gameObject.name, go.gameObject);
-        //         }
-        //     }
-        // }
     }
     
     private void TrySelectCell(Vector3 position)
@@ -173,18 +182,12 @@ public class BoardManager : MonoBehaviour
             UnselectAllCells();
 
             if (cell.SelectCell() == CellState.Select) SelectCharacter((PlayerCharacter)cell.Character);
-            else selectedCell = null;
         }
     }
 
     public void UnselectAllCells()
     {
         ForEachCell(c => c.UnSelectCell());
-    }
-
-    private bool AllActionsPerformed()
-    {
-        return playerUnits.All(unit => !unit.HasActions);
     }
 
     public void CheckActions()
@@ -208,7 +211,6 @@ public class BoardManager : MonoBehaviour
 
     public void SelectCharacter(PlayerCharacter character)
     {
-        selectedCell = character.Location;
         currentPlayer = character;
         currentPlayer.portrait.Select();
         charSelected.Invoke(character);
@@ -361,7 +363,7 @@ public class BoardManager : MonoBehaviour
 
     public void EnemyWin()
     {
-        Debug.Log("Enemy Wins");
+        GameUIController.Instance.ShowEndGame(false);
     }
 
     public void CheckPlayerWin()
@@ -377,47 +379,6 @@ public class BoardManager : MonoBehaviour
             }
         }
         
-        if(!hasCommandUnits) Debug.Log("Player Wins");
+        if(!hasCommandUnits) GameUIController.Instance.ShowEndGame(true);
     }
-    
-    #region Levels
-    
-    private IEnumerator SetupLevel1()
-    {
-        playerUnits = new List<PlayerCharacter>();
-        yield return new WaitForSeconds(0.2f);
-        playerUnits.Add((PlayerCharacter)SpawnPiece(1, 4, gruntPrefab));
-        yield return new WaitForSeconds(0.2f);
-        playerUnits.Add((PlayerCharacter)SpawnPiece(1, 2, jumpshipPrefab));
-        yield return new WaitForSeconds(0.2f);
-        playerUnits.Add((PlayerCharacter)SpawnPiece(4, 4, tankPrefab));
-        yield return new WaitForSeconds(1.0f);
-
-        drones = new List<Drone>();
-        enemyUnits = new List<EnemyCharacter>();
-        var drone = (Drone)SpawnPiece(4, 3, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(0.2f);
-        drone = (Drone)SpawnPiece(2, 7, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(0.2f);
-
-        dreadnoughts = new List<Dreadnought>();
-        var dread = (Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab);
-        dreadnoughts.Add(dread);
-        enemyUnits.Add(dread);
-        yield return new WaitForSeconds(0.2f);
-
-        var command = (CommandUnit)SpawnPiece(7, 3, commandUnitPrefab);
-        commandUnits = new List<CommandUnit>() {command };
-        enemyUnits.Add(command);
-
-        allEnemiesSpawned.Invoke();
-        GameUIController.Instance.ActivatePlayerTurn();
-        IsPlayerTurn = true;
-    }
-    
-    #endregion
 }

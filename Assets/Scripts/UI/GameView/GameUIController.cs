@@ -1,7 +1,9 @@
+using System.Collections;
 using Characters.Enemy;
 using Characters.Models;
 using Characters.Player;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -36,16 +38,27 @@ public class GameUIController : MonoBehaviour
     [SerializeField] private Sprite[] unitPortraits;
 
     [SerializeField] private GameObject topMenu;
-    [SerializeField] private CanvasGroup pauseMenuOverlay;
-    [SerializeField] private GameObject pauseMenuBG;
+    [SerializeField] private Popup pausePopup;
+    // [SerializeField] private CanvasGroup pauseMenuOverlay;
+    // [SerializeField] private GameObject pauseMenuBG;
     [SerializeField] private Button endTurnBtn;
     [SerializeField] private Button settingsBtn;
     [SerializeField] private Button continueBtn;
     [SerializeField] private Button restartBtn;
     [SerializeField] private Button mainMenuBtn;
 
+    [SerializeField] private Popup endGamePopup;
+    // [SerializeField] private CanvasGroup endGameMenuOverlay;
+    // [SerializeField] private GameObject endGameMenuBG;
+    [SerializeField] private TextMeshProUGUI title;
+    [SerializeField] private Button tryAgainBtn;
+    [SerializeField] private Button menuBtn;
+
     private RectTransform settingsBtnRect;
     private readonly float pauseBtnOffset = 110;
+
+    private readonly string playerWinText = "Congratulations! You Won!";
+    private readonly string enemyWinText = "Game over!\nNice Try!";
 
     private bool isInitialized;
 
@@ -66,8 +79,27 @@ public class GameUIController : MonoBehaviour
         endTurnBtn.onClick.AddListener(EndTurn);
         settingsBtn.onClick.AddListener(OpenPauseMenu);
         continueBtn.onClick.AddListener(ClosePauseMenu);
-        restartBtn.onClick.AddListener(RestartLevel);
-        mainMenuBtn.onClick.AddListener(BackToMainMenu);
+        restartBtn.onClick.AddListener(() =>
+        {
+            ClosePauseMenu();
+            RestartLevel();
+        });
+        mainMenuBtn.onClick.AddListener(() =>
+        {
+            ClosePauseMenu();
+            BackToMainMenu();
+        });
+        
+        tryAgainBtn.onClick.AddListener(() =>
+        {
+            CloseEndGameMenu();
+            RestartLevel();
+        });
+        menuBtn.onClick.AddListener(() =>
+        {
+            CloseEndGameMenu();
+            BackToMainMenu();
+        });
     }
 
     private void EndTurn()
@@ -81,34 +113,28 @@ public class GameUIController : MonoBehaviour
     {
         DisableButtons();
         Time.timeScale = 0;
-        pauseMenuOverlay.gameObject.SetActive(true);
-        DOVirtual.Float(0, 1, 0.2f, (value) => pauseMenuOverlay.alpha = value).SetUpdate(true).OnComplete(EnableBtns);
-        UIEffects.PanelOpenTransition(pauseMenuBG,1, 0, null, null, true);
+        
+        pausePopup.OpenPopup(EnableBtns);
     }
 
     private void ClosePauseMenu()
     {
         DisableButtons();
-        DOVirtual.Float(1, 0, 0.2f, (value) => pauseMenuOverlay.alpha = value).SetUpdate(true)
-            .OnComplete(() =>
-            {
-                EnableBtns();
-                Time.timeScale = 1;
-                pauseMenuOverlay.gameObject.SetActive(false);
-            });
-        UIEffects.PanelCloseTransition(pauseMenuBG, 1, 0, null, null, true);
+        
+        pausePopup.ClosePopup(() =>
+        {
+            EnableBtns();
+            Time.timeScale = 1;
+        });
     }
     
     private void RestartLevel()
     {
-        ClosePauseMenu();
         BoardManager.Instance.RestartLevel();
     }
 
     private void BackToMainMenu()
     {
-        ClosePauseMenu();
-        
         playerDisplay.Hide();
         enemyDisplay.Hide();
         UIEffects.PanelCloseTransition(topMenu, 1, 0, () =>
@@ -129,6 +155,8 @@ public class GameUIController : MonoBehaviour
         continueBtn.interactable = false;
         restartBtn.interactable = false;
         mainMenuBtn.interactable = false;
+        tryAgainBtn.interactable = false;
+        menuBtn.interactable = false;
     }
 
     private void EnableBtns()
@@ -138,6 +166,8 @@ public class GameUIController : MonoBehaviour
         continueBtn.interactable = true;
         restartBtn.interactable = true;
         mainMenuBtn.interactable = true;
+        tryAgainBtn.interactable = true;
+        menuBtn.interactable = true;
     }
 
     public void SpawnCharacter(Character character)
@@ -222,5 +252,26 @@ public class GameUIController : MonoBehaviour
 
         ClearEnemyDisplay();
         foreach (Transform unit in enemyUnitsGrid) Destroy(unit.gameObject);
+    }
+
+    public void ShowEndGame(bool playerWon)
+    {
+        title.text =  playerWon ? playerWinText : enemyWinText;
+        
+        DisableButtons();
+        Time.timeScale = 0;
+        
+        endGamePopup.OpenPopup(EnableBtns);
+    }
+
+    private void CloseEndGameMenu()
+    {
+        DisableButtons();
+        
+        endGamePopup.ClosePopup(() =>
+        {
+            EnableBtns();
+            Time.timeScale = 1;
+        });
     }
 }
