@@ -37,23 +37,29 @@ public static class LevelInfo
     public static IEnumerator SetupLevel1(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits, List<Drone> drones,
         List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 1, gruntPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 6, jumpshipPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(0, 4, tankPrefab));
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (1, 3), gruntPrefab}, { (0, 5), jumpshipPrefab}, { (1, 6), tankPrefab}
+        };
+
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
         yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
 
-        var drone = (Drone)BoardManager.SpawnPiece(4, 3, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        drone = (Drone)BoardManager.SpawnPiece(4, 5, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-
+        (int, int)[] dronePsns = { (4, 3), (4, 5) };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+        
         var dread = (Dreadnought)BoardManager.SpawnPiece(6, 6, dreadnoughtPrefab);
         dreadnoughts.Add(dread);
         enemyUnits.Add(dread);
@@ -71,36 +77,37 @@ public static class LevelInfo
     public static IEnumerator SetupLevel2(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits, List<Drone> drones,
         List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 1, gruntPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 6, gruntPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(0, 3, jumpshipPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(0, 4, tankPrefab));
-        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
-        
-        var drone = (Drone)BoardManager.SpawnPiece(6, 7, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        drone = (Drone)BoardManager.SpawnPiece(5, 0, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        drone = (Drone)BoardManager.SpawnPiece(4, 1, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (1, 1), gruntPrefab}, { (1, 6), gruntPrefab}, { (0, 3), jumpshipPrefab}, { (0, 4), tankPrefab}
+        };
 
-        var dread = (Dreadnought)BoardManager.SpawnPiece(6, 6, dreadnoughtPrefab);
-        dreadnoughts.Add(dread);
-        enemyUnits.Add(dread);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        dread = (Dreadnought)BoardManager.SpawnPiece(7, 4, dreadnoughtPrefab);
-        dreadnoughts.Add(dread);
-        enemyUnits.Add(dread);
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
+        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
+
+        (int, int)[] dronePsns = { (6, 7), (5, 0), (4, 1) };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] dreadPsns = { (6, 6), (7, 4) };
+        foreach (var psn in dreadPsns)
+        {
+            var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);
+            dreadnoughts.Add(dread);
+            enemyUnits.Add(dread);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
 
         var command = (CommandUnit)BoardManager.SpawnPiece(7, 3, commandUnitPrefab);
         commandUnits.Add(command);
@@ -114,41 +121,47 @@ public static class LevelInfo
     public static IEnumerator SetupLevel3(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits, List<Drone> drones,
         List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 1, gruntPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(1, 6, gruntPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(0, 3, jumpshipPrefab));
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(0, 4, tankPrefab));
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (1, 0), gruntPrefab}, { (1, 7), gruntPrefab}, { (0, 3), jumpshipPrefab}, { (0, 6), jumpshipPrefab}, { (0, 0), tankPrefab}, { (0, 7), tankPrefab}
+        };
+        
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
         yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
-        
-        var drone = (Drone)BoardManager.SpawnPiece(6, 7, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        drone = (Drone)BoardManager.SpawnPiece(5, 0, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        drone = (Drone)BoardManager.SpawnPiece(4, 1, dronePrefab);
-        drones.Add(drone);
-        enemyUnits.Add(drone);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        
-        var dread = (Dreadnought)BoardManager.SpawnPiece(6, 6, dreadnoughtPrefab);
-        dreadnoughts.Add(dread);
-        enemyUnits.Add(dread);
-        yield return new WaitForSeconds(delayBetweenSpawning);
-        dread = (Dreadnought)BoardManager.SpawnPiece(7, 4, dreadnoughtPrefab);
-        dreadnoughts.Add(dread);
-        enemyUnits.Add(dread);
-    
-        var command = (CommandUnit)BoardManager.SpawnPiece(7, 3, commandUnitPrefab);
-        commandUnits.Add(command);
-        enemyUnits.Add(command);
-    
+
+        (int, int)[] dronePsns = { (5, 2), (5, 3), (5, 4),  (5, 5) };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] dreadPsns = { (5, 0), (5, 1), (5, 6), (5, 7) };
+        foreach (var psn in dreadPsns)
+        {
+            var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);
+            dreadnoughts.Add(dread);
+            enemyUnits.Add(dread);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] commandPsns = { (7, 4), (6, 3)};
+        foreach (var psn in commandPsns)
+        {
+            var command = (CommandUnit)BoardManager.SpawnPiece(psn.Item1, psn.Item2, commandUnitPrefab);
+            commandUnits.Add(command);
+            enemyUnits.Add(command);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
         allEnemiesSpawned.Invoke();
         GameUIController.Instance.ActivatePlayerTurn();
         BoardManager.Instance.IsPlayerTurn = true;
@@ -157,25 +170,188 @@ public static class LevelInfo
     public static IEnumerator ClassicalChess(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits,
         List<Drone> drones, List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (1, 0), gruntPrefab}, { (1, 1), gruntPrefab}, { (1, 2), gruntPrefab}, { (1, 3), gruntPrefab}, 
+            { (1, 4), gruntPrefab}, { (1, 5), gruntPrefab}, { (1, 6), gruntPrefab}, { (1, 7), gruntPrefab}, 
+            { (0, 0), jumpshipPrefab}, { (0, 1), jumpshipPrefab}, { (0, 6), jumpshipPrefab}, { (0, 7), jumpshipPrefab},
+            { (0, 2), tankPrefab}, { (0, 3), tankPrefab}, { (0, 4), tankPrefab}, { (0, 5), tankPrefab},
+        };
+
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
+        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
+
+        (int, int)[] dronePsns = { (6, 0), (6, 1), (6, 2),  (6, 3), (6, 4), (6, 5), (6, 6),  (6, 7) };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] dreadPsns = { (7, 0), (7, 1), (7, 2), (7, 5), (7, 6), (7, 7) };
+        foreach (var psn in dreadPsns)
+        {
+            var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);
+            dreadnoughts.Add(dread);
+            enemyUnits.Add(dread);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] commandPsns = { (7, 3), (7, 4)};
+        foreach (var psn in commandPsns)
+        {
+            var command = (CommandUnit)BoardManager.SpawnPiece(psn.Item1, psn.Item2, commandUnitPrefab);
+            commandUnits.Add(command);
+            enemyUnits.Add(command);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        allEnemiesSpawned.Invoke();
+        GameUIController.Instance.ActivatePlayerTurn();
+        BoardManager.Instance.IsPlayerTurn = true;
     }
     
     public static IEnumerator GruntsWar(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits,
         List<Drone> drones, List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (0, 0), gruntPrefab}, { (0, 2), gruntPrefab}, { (0, 4), gruntPrefab}, { (0, 6), gruntPrefab},
+            { (1, 1), gruntPrefab}, { (1, 3), gruntPrefab}, { (1, 5), gruntPrefab}, { (1, 7), gruntPrefab},
+        };
+        
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
+        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
+
+        (int, int)[] dronePsns = { (4, 0), (4, 2), (4, 4),  (4, 6), (5, 1), (5, 3), (5, 5),  (5, 7), (6, 0), (6, 2), (6, 4),  (6, 6) };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+        
+        (int, int)[] commandPsns = { (7, 3)};
+        foreach (var psn in commandPsns)
+        {
+            var command = (CommandUnit)BoardManager.SpawnPiece(psn.Item1, psn.Item2, commandUnitPrefab);
+            commandUnits.Add(command);
+            enemyUnits.Add(command);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+        
+        allEnemiesSpawned.Invoke();
+        GameUIController.Instance.ActivatePlayerTurn();
+        BoardManager.Instance.IsPlayerTurn = true;
     }
     
     public static IEnumerator ThreeManArmy(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits,
         List<Drone> drones, List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (0, 3), tankPrefab}, { (0, 4), tankPrefab}, { (0, 5), tankPrefab}
+        };
+        
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
+        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
+        
+        (int, int)[] dreadPsns = { (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7) };
+        foreach (var psn in dreadPsns)
+        {
+            var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);
+            dreadnoughts.Add(dread);
+            enemyUnits.Add(dread);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+        
+        (int, int)[] commandPsns = { (7, 0), (7, 7)};
+        foreach (var psn in commandPsns)
+        {
+            var command = (CommandUnit)BoardManager.SpawnPiece(psn.Item1, psn.Item2, commandUnitPrefab);
+            commandUnits.Add(command);
+            enemyUnits.Add(command);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+        
+        allEnemiesSpawned.Invoke();
+        GameUIController.Instance.ActivatePlayerTurn();
+        BoardManager.Instance.IsPlayerTurn = true;
     }
     
     public static IEnumerator HardcoreLevel(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits,
         List<Drone> drones, List<Dreadnought> dreadnoughts, List<CommandUnit> commandUnits, UnityEvent allEnemiesSpawned)
     {
-        yield return new WaitForSeconds(delayBetweenSpawning);
+        Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
+        {
+            { (0, 1), jumpshipPrefab}, { (0, 3), jumpshipPrefab}, { (0, 5), jumpshipPrefab}, { (0, 7), jumpshipPrefab},
+            { (1, 0), jumpshipPrefab}, { (1, 2), jumpshipPrefab}, { (1, 4), jumpshipPrefab}, { (1, 6), jumpshipPrefab},
+        };
+        
+        foreach (var kvp in players)
+        {
+            int x = kvp.Key.Item1;
+            int y = kvp.Key.Item2;
+            yield return new WaitForSeconds(delayBetweenSpawning);
+            playerUnits.Add((PlayerCharacter)BoardManager.SpawnPiece(x, y, kvp.Value));
+        }
+        yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
+        
+        (int, int)[] dronePsns =
+        {
+            (4, 0), (4, 1), (4, 2),  (4, 3), (4, 4), (4, 5), (4, 6),  (4, 7),
+            (6, 0), (6, 1), (6, 2),  (6, 3), (6, 4), (6, 5), (6, 6),  (6, 7)
+        };
+        foreach (var psn in dronePsns)
+        {
+            var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
+            drones.Add(drone);
+            enemyUnits.Add(drone);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] dreadPsns = { (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),  (5, 7) };
+        foreach (var psn in dreadPsns)
+        {
+            var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);
+            dreadnoughts.Add(dread);
+            enemyUnits.Add(dread);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        (int, int)[] commandPsns = { (7, 1), (7, 6)};
+        foreach (var psn in commandPsns)
+        {
+            var command = (CommandUnit)BoardManager.SpawnPiece(psn.Item1, psn.Item2, commandUnitPrefab);
+            commandUnits.Add(command);
+            enemyUnits.Add(command);
+            yield return new WaitForSeconds(delayBetweenSpawning);
+        }
+
+        allEnemiesSpawned.Invoke();
+        GameUIController.Instance.ActivatePlayerTurn();
+        BoardManager.Instance.IsPlayerTurn = true;
     }
     
     public static IEnumerator Custom(List<PlayerCharacter> playerUnits, List<EnemyCharacter> enemyUnits,
