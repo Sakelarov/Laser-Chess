@@ -7,6 +7,10 @@ public abstract class PlayerCharacter : Character
 {
     protected bool IsSelected;
 
+    public bool CanMove { get; set; }
+    public bool CanAttack { get; set; }
+    public bool HasActions => (!HasMoved && CanMove) || (!HasAttacked && CanAttack);
+
     public override void Setup(Cell cell)
     {
         base.Setup(cell);
@@ -17,6 +21,15 @@ public abstract class PlayerCharacter : Character
             c.attackCell.AddListener(Attack);
         });
         Bm.charSelected.AddListener(CheckSelectedCharacter);
+        
+        Bm.allEnemiesSpawned.AddListener(StartTurn);
+    }
+
+    protected virtual void StartTurn()
+    {
+        GetMovementCells();
+        GetAttackTargets();
+        portrait.UpdateActions();
     }
 
     protected virtual void SelectCharacter()
@@ -27,7 +40,7 @@ public abstract class PlayerCharacter : Character
         else if (!HasAttacked) ShowAttackLocations();
     }
 
-    protected virtual void UnSelectCharacter()
+    public void UnSelectCharacter()
     {
         IsSelected = false;
         HideLocations();
@@ -39,8 +52,11 @@ public abstract class PlayerCharacter : Character
         else if (!IsSelected && this == character) this.InvokeAfterFrames(1,SelectCharacter);
     }
 
-    protected abstract void GetMovementCells();
+    public abstract void GetMovementCells();
+    
     public abstract void ShowMoveLocations();
+
+    public abstract void GetAttackTargets();
     
     public abstract void ShowAttackLocations();
 
@@ -49,35 +65,46 @@ public abstract class PlayerCharacter : Character
     protected abstract void Move(Cell cell);
     
     protected abstract void Attack(Cell cell);
+    
+    public override void ResetTurn()
+    {
+        HasMoved = false;
+        HasAttacked = false;
+        StartTurn();
+    }
 
     protected virtual void RegisterAttack()
     {
         HasMoved = true; // player cant move after attack
+        CanMove = false;
         HasAttacked = true;
-        portrait.DisableAttackIndicator();
-        portrait.DisableMoveIndicator();
+        CanAttack = false;
+        
         HideLocations();
         Bm.HideSelectOverlay();
-        GameUIController.Instance.UpdatePlayerInfo(this);
+        GameUIController.Instance.UpdatePlayerDisplay(this);
     }
 
     protected virtual void RegisterMove(Cell cell)
     {
         HasMoved = true;
-        portrait.DisableMoveIndicator();
+        CanMove = false;
+        
         HideLocations();
         Bm.HideSelectOverlay();
-        GameUIController.Instance.UpdatePlayerInfo(this);
-            
+
         Location.SetCharacter(null);
         Location = cell;
         cell.SetCharacter(this);
         GetMovementCells();
+        Bm.CheckActions();
+        portrait.UpdatePosition();
     }
 
     public override void Die()
     {
         base.Die();
         GameUIController.Instance.DeactivePlayer(this);
+        Bm.CheckForEnemyWin();
     }
 }

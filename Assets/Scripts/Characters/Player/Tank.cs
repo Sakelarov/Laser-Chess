@@ -28,15 +28,14 @@ namespace Characters.Player
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetMovementCells();
-
+           
             anim = GetComponentInChildren<Animator>();
             paramShoot = Animator.StringToHash("shoot");
             paramRun = Animator.StringToHash("run");
             paramDie = Animator.StringToHash("death");
         }
 
-        protected override void GetMovementCells()
+        public override void GetMovementCells()
         {
             var psn = Location.Coordinates;
 
@@ -69,15 +68,33 @@ namespace Characters.Player
                     }
                 }
             }
+            
+            CanMove = false;
+            foreach (var cell in availableMovePositions)
+            {
+                if (cell != null && !cell.IsOccupied)
+                {
+                    CanMove = !HasMoved;
+                    break;
+                }
+            }
         }
         public override void ShowMoveLocations()
         {
             HideLocations();
             GetMovementCells();
+            
             foreach (var cell in availableMovePositions)
             {
                 if(cell != null && !cell.IsOccupied) cell.GreenHighlight();
             }
+        }
+        
+        public override void GetAttackTargets()
+        {
+            availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Orthogonal);
+
+            CanAttack = availableTargets.Count > 0 && !HasAttacked;
         }
         
         public override void ShowAttackLocations()
@@ -88,9 +105,10 @@ namespace Characters.Player
             
             if (availableTargets.Count > 0)
             {
+                CanAttack = !HasAttacked;
                 AnimateAttackLocations();
             }
-            else HasAttacked = true;
+            else CanAttack = false;
         }
         
         private void AnimateAttackLocations()
@@ -163,6 +181,7 @@ namespace Characters.Player
         private void ApplyDamage()
         {
             attackTarget.AttackCell(AttackPonints);
+            BoardManager.Instance.CheckActions();
         }
         
         public override void Die()
@@ -173,7 +192,7 @@ namespace Characters.Player
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdatePlayerInfo(this);
+            GameUIController.Instance.UpdatePlayerDisplay(this);
             // TODO: Add animation for getting damaged
         }
     }

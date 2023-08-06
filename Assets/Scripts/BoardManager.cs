@@ -45,18 +45,23 @@ public class BoardManager : MonoBehaviour
     private RaycastHit hit;
     private Cell selectedCell;
     private PlayerCharacter currentPlayer;
-    private List<PlayerCharacter> playerUnits;
-    private List<Drone> drones;
-    private List<Dreadnought> dreadnoughts;
-    private List<CommandUnit> commandUnits;
+    private List<PlayerCharacter> playerUnits = new List<PlayerCharacter>();
+    private List<EnemyCharacter> enemyUnits = new List<EnemyCharacter>();
+    private List<Drone> drones = new List<Drone>();
+    private List<Dreadnought> dreadnoughts = new List<Dreadnought>();
+    private List<CommandUnit> commandUnits = new List<CommandUnit>();
+    private IEnumerator levelSpawner;
     private static readonly int boardSize = 8;
     private static readonly float constantDelay = 1;
 
     public enum LevelType { None, Level1, Level2, Level3, }
 
+    private LevelType currentLevel = LevelType.None;
+
     public static Board board;
     public bool IsPlayerTurn { get; private set; }
     [HideInInspector] public UnityEvent<PlayerCharacter> charSelected;
+    [HideInInspector] public UnityEvent allEnemiesSpawned;
 
     private void Start()
     {
@@ -76,16 +81,43 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    public void StartLevel(LevelType level)
+    public void StartLevel(LevelType level, bool showGameView = true)
     {
-        GameUIController.Instance.SetupGameView();
-        
+        if (showGameView) GameUIController.Instance.SetupGameView();
+
+        currentLevel = level;
         switch (level)
         {
-            case LevelType.Level1 : StartCoroutine(SetupLevel1()); break;
+            case LevelType.Level1 : levelSpawner = SetupLevel1(); break;
             //case LevelType.Level2 : StartCoroutine(SetupLevel1()); break;
             //case LevelType.Level3 : StartCoroutine(SetupLevel1()); break;
         }
+
+        StartCoroutine(levelSpawner);
+    }
+
+    public void RestartLevel()
+    {
+        ResetAll();
+        StartLevel(currentLevel, false);
+    }
+
+    public void ResetAll()
+    {
+        foreach (var unit in playerUnits)
+        {
+            if (unit != null) Destroy(unit.gameObject);
+        }
+        
+        foreach (var unit in enemyUnits)
+        {
+            if (unit != null) Destroy(unit.gameObject);
+        }
+
+        if (levelSpawner != null) StopCoroutine(levelSpawner);
+        HideSelectOverlay();
+        ForEachCell((c) => c.ResetCell());
+        GameUIController.Instance.ResetGameUI();
     }
 
     private static Character SpawnPiece(int row, int col, GameObject prefab)
@@ -104,9 +136,9 @@ public class BoardManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0)) TrySelectCell(Input.mousePosition);
+        if (Input.GetMouseButtonDown(0) && Time.timeScale > 0.1f) TrySelectCell(Input.mousePosition);
         
-        if (IsPlayerTurn && AllActionsPerformed()) EndPlayerTurn();
+        //if (IsPlayerTurn && AllActionsPerformed()) EndPlayerTurn();
         
         // if (Input.GetMouseButtonDown(0))
         // {
@@ -152,7 +184,26 @@ public class BoardManager : MonoBehaviour
 
     private bool AllActionsPerformed()
     {
-        return playerUnits.All(unit => unit.HasAttacked);
+        return playerUnits.All(unit => !unit.HasActions);
+    }
+
+    public void CheckActions()
+    {
+        bool hasActions = false;
+        foreach (var unit in playerUnits)
+        {
+            if (unit != null)
+            {
+                if(!unit.HasMoved) unit.GetMovementCells();
+                if(!unit.HasAttacked) unit.GetAttackTargets();
+                if (unit.HasActions && !hasActions) hasActions = true;
+                
+                unit.portrait.UpdateActions();
+                GameUIController.Instance.UpdatePlayerDisplay(unit);
+            }
+        }
+        
+        if(!hasActions) EndPlayerTurn();
     }
 
     public void SelectCharacter(PlayerCharacter character)
@@ -200,17 +251,53 @@ public class BoardManager : MonoBehaviour
 
     public void EndPlayerTurn()
     {
+        if (currentPlayer != null) currentPlayer.UnSelectCharacter();
+        currentPlayer = null;
         IsPlayerTurn = false;
+        
+        foreach (var unit in playerUnits)
+        {
+            if (unit != null)
+            {
+                unit.CanMove = false;
+                unit.CanAttack = false;
+                unit.portrait.UpdateActions();
+                GameUIController.Instance.UpdatePlayerDisplay(unit);
+            }
+        }
+        
+        foreach (var unit in enemyUnits)
+        {
+            if (unit != null)
+            {
+                unit.ResetTurn();
+            }
+        }
+
+        GameUIController.Instance.ActivateEnemyTurn();
+        
         HideSelectOverlay();
         StartCoroutine(PlayEnemyTurn());
     }
 
     private void EndAITurn()
     {
+        foreach (var unit in enemyUnits)
+        {
+            if (unit != null)
+            {
+                unit.HasMoved = true;
+                unit.HasAttacked = true;
+                unit.portrait.UpdateActions();
+            }
+        }
+
         foreach (var unit in playerUnits)
         {
             unit.ResetTurn();
         }
+        
+        GameUIController.Instance.ActivatePlayerTurn();
         IsPlayerTurn = true;
     }
 
@@ -218,6 +305,7 @@ public class BoardManager : MonoBehaviour
     {
         yield return new WaitForSeconds(2);
         float delay = 0;
+        
         foreach (var drone in drones)
         {
             if(drone != null && !drone.IsDead)
@@ -256,6 +344,21 @@ public class BoardManager : MonoBehaviour
         dmgController.Setup(amount);
     }
 
+    public void CheckForEnemyWin()
+    {
+        bool alivePlayer = false;
+        foreach (var unit in playerUnits)
+        {
+            if (unit != null && !unit.IsDead)
+            {
+                alivePlayer = true;
+                break;
+            }
+        }
+        
+        if(!alivePlayer) EnemyWin();
+    }
+
     public void EnemyWin()
     {
         Debug.Log("Enemy Wins");
@@ -267,7 +370,7 @@ public class BoardManager : MonoBehaviour
 
         foreach (var unit in commandUnits)
         {
-            if (unit != null)
+            if (unit != null && !unit.IsDead)
             {
                 hasCommandUnits = true;
                 break;
@@ -291,17 +394,28 @@ public class BoardManager : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
 
         drones = new List<Drone>();
-        drones.Add((Drone)SpawnPiece(4, 1, dronePrefab));
+        enemyUnits = new List<EnemyCharacter>();
+        var drone = (Drone)SpawnPiece(4, 3, dronePrefab);
+        drones.Add(drone);
+        enemyUnits.Add(drone);
         yield return new WaitForSeconds(0.2f);
-        drones.Add((Drone)SpawnPiece(3, 2, dronePrefab));
+        drone = (Drone)SpawnPiece(2, 7, dronePrefab);
+        drones.Add(drone);
+        enemyUnits.Add(drone);
         yield return new WaitForSeconds(0.2f);
 
         dreadnoughts = new List<Dreadnought>();
-        dreadnoughts.Add((Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab));
+        var dread = (Dreadnought)SpawnPiece(5, 1, dreadnoughtPrefab);
+        dreadnoughts.Add(dread);
+        enemyUnits.Add(dread);
         yield return new WaitForSeconds(0.2f);
 
-        commandUnits = new List<CommandUnit>() { (CommandUnit)SpawnPiece(7, 3, commandUnitPrefab) };
+        var command = (CommandUnit)SpawnPiece(7, 3, commandUnitPrefab);
+        commandUnits = new List<CommandUnit>() {command };
+        enemyUnits.Add(command);
 
+        allEnemiesSpawned.Invoke();
+        GameUIController.Instance.ActivatePlayerTurn();
         IsPlayerTurn = true;
     }
     

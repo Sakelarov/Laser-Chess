@@ -1,9 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using Characters.Enemy;
 using Characters.Models;
 using Characters.Player;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 public class GameUIController : MonoBehaviour
 {
@@ -34,10 +35,109 @@ public class GameUIController : MonoBehaviour
 
     [SerializeField] private Sprite[] unitPortraits;
 
+    [SerializeField] private GameObject topMenu;
+    [SerializeField] private CanvasGroup pauseMenuOverlay;
+    [SerializeField] private GameObject pauseMenuBG;
+    [SerializeField] private Button endTurnBtn;
+    [SerializeField] private Button settingsBtn;
+    [SerializeField] private Button continueBtn;
+    [SerializeField] private Button restartBtn;
+    [SerializeField] private Button mainMenuBtn;
+
+    private RectTransform settingsBtnRect;
+    private readonly float pauseBtnOffset = 110;
+
+    private bool isInitialized;
+
     public void SetupGameView()
     {
         playerDisplay.Show();
         enemyDisplay.Show();
+
+        if(!isInitialized) Init();
+        
+        UIEffects.PanelOpenTransition(topMenu);
+    }
+
+    private void Init()
+    {
+        settingsBtnRect = settingsBtn.GetComponent<RectTransform>();
+        
+        endTurnBtn.onClick.AddListener(EndTurn);
+        settingsBtn.onClick.AddListener(OpenPauseMenu);
+        continueBtn.onClick.AddListener(ClosePauseMenu);
+        restartBtn.onClick.AddListener(RestartLevel);
+        mainMenuBtn.onClick.AddListener(BackToMainMenu);
+    }
+
+    private void EndTurn()
+    {
+        BoardManager.Instance.EndPlayerTurn();
+        DisableButtons();
+        Invoke(nameof(EnableBtns), 0.6f);
+    }
+
+    private void OpenPauseMenu()
+    {
+        DisableButtons();
+        Time.timeScale = 0;
+        pauseMenuOverlay.gameObject.SetActive(true);
+        DOVirtual.Float(0, 1, 0.2f, (value) => pauseMenuOverlay.alpha = value).SetUpdate(true).OnComplete(EnableBtns);
+        UIEffects.PanelOpenTransition(pauseMenuBG,1, 0, null, null, true);
+    }
+
+    private void ClosePauseMenu()
+    {
+        DisableButtons();
+        DOVirtual.Float(1, 0, 0.2f, (value) => pauseMenuOverlay.alpha = value).SetUpdate(true)
+            .OnComplete(() =>
+            {
+                EnableBtns();
+                Time.timeScale = 1;
+                pauseMenuOverlay.gameObject.SetActive(false);
+            });
+        UIEffects.PanelCloseTransition(pauseMenuBG, 1, 0, null, null, true);
+    }
+    
+    private void RestartLevel()
+    {
+        ClosePauseMenu();
+        BoardManager.Instance.RestartLevel();
+    }
+
+    private void BackToMainMenu()
+    {
+        ClosePauseMenu();
+        
+        playerDisplay.Hide();
+        enemyDisplay.Hide();
+        UIEffects.PanelCloseTransition(topMenu, 1, 0, () =>
+        {
+            settingsBtnRect.offsetMax = new Vector2(-pauseBtnOffset, 0);
+            settingsBtnRect.offsetMin = new Vector2(-pauseBtnOffset, 0);
+            endTurnBtn.gameObject.SetActive(false);
+        }, null, true);
+        
+        BoardManager.Instance.ResetAll();
+        MainMenuController.Instance.OpenMainMenu();
+    }
+
+    private void DisableButtons()
+    {
+        endTurnBtn.interactable = false;
+        settingsBtn.interactable = false;
+        continueBtn.interactable = false;
+        restartBtn.interactable = false;
+        mainMenuBtn.interactable = false;
+    }
+
+    private void EnableBtns()
+    {
+        endTurnBtn.interactable = true;
+        settingsBtn.interactable = true;
+        continueBtn.interactable = true;
+        restartBtn.interactable = true;
+        mainMenuBtn.interactable = true;
     }
 
     public void SpawnCharacter(Character character)
@@ -76,23 +176,51 @@ public class GameUIController : MonoBehaviour
         return null;
     }
 
-    public void UpdatePlayerInfo(Character character)
-    {
-        playerDisplay.UpdateInfo(character);
-    }
+    public void UpdatePlayerDisplay(Character character) { playerDisplay.UpdateInfo(character); }
     
-    public void UpdateEnemyInfo(Character character)
+    public void UpdateEnemyDisplay(Character character) { enemyDisplay.UpdateInfo(character); }
+
+    public void DeactivePlayer(Character character) { playerDisplay.DeactivateCharacter(character); }
+    
+    public void DeactiveEnemy(Character character) { enemyDisplay.DeactivateCharacter(character); }
+
+    public void ClearPlayerDisplay() { playerDisplay.Clear(); }
+    
+    public void ClearEnemyDisplay() { enemyDisplay.Clear(); }
+
+    public void ActivatePlayerTurn()
     {
-        enemyDisplay.UpdateInfo(character);
+        playerDisplay.ActivateTurnIndicator();
+        enemyDisplay.DeactivateTurnIndicator();
+        ClearPlayerDisplay();
+
+        UIEffects.PanelOpenTransition(endTurnBtn.gameObject);
+        DOVirtual.Float(pauseBtnOffset, 0, 0.25f, value =>
+            {
+                settingsBtnRect.offsetMax = new Vector2(-value, 0);
+                settingsBtnRect.offsetMin = new Vector2(-value, 0);
+            }).SetEase(Ease.Linear);
     }
 
-    public void DeactivePlayer(Character character)
+    public void ActivateEnemyTurn()
     {
-        playerDisplay.DeactivateCharacter(character);
+        playerDisplay.DeactivateTurnIndicator();
+        enemyDisplay.ActivateTurnIndicator();
+        
+        DOVirtual.Float(0, pauseBtnOffset, 0.25f, value =>
+        {
+            settingsBtnRect.offsetMax = new Vector2(-value, 0);
+            settingsBtnRect.offsetMin = new Vector2(-value, 0);
+        }).SetEase(Ease.Linear);
+        UIEffects.PanelCloseTransition(endTurnBtn.gameObject);
     }
-    
-    public void DeactiveEnemy(Character character)
+
+    public void ResetGameUI()
     {
-        enemyDisplay.DeactivateCharacter(character);
+        ClearPlayerDisplay();
+        foreach (Transform unit in playerUnitsGrid) Destroy(unit.gameObject);
+
+        ClearEnemyDisplay();
+        foreach (Transform unit in enemyUnitsGrid) Destroy(unit.gameObject);
     }
 }

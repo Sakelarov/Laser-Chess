@@ -15,7 +15,7 @@ namespace Characters.Player
         private List<Cell> attackHighlightedCells = new List<Cell>();
         private List<Cell> availableTargets = new List<Cell>();
         
-        private Cell _topCell, _bottomCell, _leftCell, _rightCell; // movement cells
+        private Cell[] availableMovePositions = new Cell[4];
 
         private Animator anim;
         private int paramSpeed, paramAiming, paramReload, paramShoot, paramDeath;
@@ -24,8 +24,7 @@ namespace Characters.Player
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetMovementCells();
-
+           
             anim = GetComponentInChildren<Animator>();
             paramSpeed = Animator.StringToHash("Speed");
             paramAiming = Animator.StringToHash("Aiming");
@@ -34,30 +33,46 @@ namespace Characters.Player
             paramDeath = Animator.StringToHash("Dead");
         }
 
-        protected override void GetMovementCells()
+        public override void GetMovementCells()
         {
             var psn = Location.Coordinates;
-           
-            _topCell = BoardManager.TryGetCell(psn.x + 1, psn.y);
-            _bottomCell = BoardManager.TryGetCell(psn.x - 1, psn.y);
-            _leftCell = BoardManager.TryGetCell(psn.x, psn.y - 1);
-            _rightCell = BoardManager.TryGetCell(psn.x, psn.y + 1);
+
+            availableMovePositions[0] = BoardManager.TryGetCell(psn.x + 1, psn.y);
+            availableMovePositions[1] = BoardManager.TryGetCell(psn.x - 1, psn.y);
+            availableMovePositions[2] = BoardManager.TryGetCell(psn.x, psn.y - 1);
+            availableMovePositions[3] = BoardManager.TryGetCell(psn.x, psn.y + 1);
+
+            foreach (var cell in availableMovePositions)
+            {
+                if (cell != null && !cell.IsOccupied)
+                {
+                    CanMove = !HasMoved;
+                    break;
+                }
+            }
         }
 
         public override void ShowMoveLocations()
         {
             HideLocations();
-            
-            if (_topCell != null && !_topCell.IsOccupied)
-                _topCell.GreenHighlight();
-            if (_bottomCell != null && !_bottomCell.IsOccupied)
-                _bottomCell.GreenHighlight();
-            if (_leftCell != null && !_leftCell.IsOccupied)
-                _leftCell.GreenHighlight();
-            if (_rightCell != null && !_rightCell.IsOccupied)
-                _rightCell.GreenHighlight();
+            GetMovementCells();
+
+            foreach (var cell in availableMovePositions)
+            {
+                if (cell != null && !cell.IsOccupied)
+                {
+                    cell.GreenHighlight();
+                }
+            }
         }
 
+        public override void GetAttackTargets()
+        {
+            availableTargets = CharacterActions.GetAvailableTargets<EnemyCharacter>(Location, CharacterActions.DirectionType.Diagonal);
+
+            CanAttack = availableTargets.Count > 0 && !HasAttacked;
+        }
+        
         public override void ShowAttackLocations()
         {
             HideLocations();
@@ -67,9 +82,10 @@ namespace Characters.Player
 
             if (availableTargets.Count > 0)
             {
+                CanAttack = !HasAttacked;
                 AnimateAttackLocations();
             }
-            else HasAttacked = true;
+            else CanAttack = false;
         }
 
         private void AnimateAttackLocations()
@@ -83,18 +99,14 @@ namespace Characters.Player
 
         protected override void HideLocations()
         {
-            if (_topCell != null) 
-                _topCell.DisableHighlight();
-            if (_bottomCell != null)
-                _bottomCell.DisableHighlight();
-            if (_leftCell != null)
-                _leftCell.DisableHighlight();
-            if (_rightCell != null)
-                _rightCell.DisableHighlight();
-
+            foreach (var cell in availableMovePositions)
+            {
+                if (cell != null) cell.DisableHighlight();
+            }
+            
             foreach (var cell in attackHighlightedCells)
             {
-                cell.DisableHighlight();
+                if (cell != null) cell.DisableHighlight();
             }
         }
 
@@ -147,6 +159,7 @@ namespace Characters.Player
         private void ApplyDamage()
         {
             attackTarget.AttackCell(AttackPonints);
+            BoardManager.Instance.CheckActions();
         }
 
         private void Reload()
@@ -168,7 +181,7 @@ namespace Characters.Player
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdatePlayerInfo(this);
+            GameUIController.Instance.UpdatePlayerDisplay(this);
             // TODO: Add animation for getting damaged
         }
     }

@@ -37,9 +37,11 @@ public class UIEffects : MonoBehaviour
             {
                 canvasGroup.DOKill();
                 canvasGroup.alpha = 0;
-                canvasGroup.DOFade(1, fadeTime / (2*speed)).SetDelay(delay).SetUpdate(independentUpdate);
+                canvasGroup.DOFade(1, fadeTime / (2 * speed))
+                    .SetDelay(delay).SetUpdate(independentUpdate)
+                    .SetLink(panel, LinkBehaviour.KillOnDestroy);
             }
-            
+
             panelTransfrom.DOScale(new Vector3(0.3f, 0.3f, 0.3f), animationTime / speed)
                 .From()
                 .SetEase(Ease.OutBack)
@@ -63,8 +65,9 @@ public class UIEffects : MonoBehaviour
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = 1;
-                canvasGroup.DOFade(0,  fadeTime / (2 * speed)).SetDelay(delay).SetUpdate(independentUpdate);
-
+                canvasGroup.DOFade(0, fadeTime / (2 * speed))
+                    .SetDelay(delay).SetUpdate(independentUpdate)
+                    .SetLink(panel, LinkBehaviour.KillOnDestroy);
             }
             if (!playingObjects.ContainsKey(panel))
             {

@@ -21,15 +21,14 @@ namespace Characters.Player
         public override void Setup(Cell cell)
         {
             base.Setup(cell);
-            GetMovementCells();
-
+            
             anim = GetComponentInChildren<Animator>();
             paramJump = Animator.StringToHash("jump");
             paramDie = Animator.StringToHash("die");
             paramSpeed = Animator.StringToHash("speed");
         }
     
-        protected override void GetMovementCells()
+        public override void GetMovementCells()
         {
             var psn = Location.Coordinates;
             
@@ -41,11 +40,22 @@ namespace Characters.Player
             availableMovePositions[5] = BoardManager.TryGetCell(psn.x - 1, psn.y - 2);
             availableMovePositions[6] = BoardManager.TryGetCell(psn.x - 2, psn.y + 1);
             availableMovePositions[7] = BoardManager.TryGetCell(psn.x - 2, psn.y - 1);
+
+            CanMove = false;
+            foreach (var cell in availableMovePositions)
+            {
+                if (cell != null && !cell.IsOccupied)
+                {
+                    CanMove = !HasMoved;
+                    break;
+                }
+            }
         }
     
         public override void ShowMoveLocations()
         {
             HideLocations();
+            GetMovementCells();
             
             foreach (var cell in availableMovePositions)
             {
@@ -53,7 +63,7 @@ namespace Characters.Player
             }
         }
         
-        private void GetAttackCells()
+        public override void GetAttackTargets()
         {
             var psn = Location.Coordinates;
            
@@ -61,37 +71,28 @@ namespace Characters.Player
             _bottomCell = BoardManager.TryGetCell(psn.x - 1, psn.y);
             _leftCell = BoardManager.TryGetCell(psn.x, psn.y - 1);
             _rightCell = BoardManager.TryGetCell(psn.x, psn.y + 1);
+            
+            attackTargets = new List<Cell>();
+            
+            if (_topCell != null && _topCell.IsOccupied && _topCell.Character is EnemyCharacter) attackTargets.Add(_topCell);
+            if (_bottomCell != null && _bottomCell.IsOccupied && _bottomCell.Character is EnemyCharacter) attackTargets.Add(_bottomCell);
+            if (_leftCell != null && _leftCell.IsOccupied && _leftCell.Character is EnemyCharacter) attackTargets.Add(_leftCell);
+            if (_rightCell != null && _rightCell.IsOccupied && _rightCell.Character is EnemyCharacter) attackTargets.Add(_rightCell);
+
+            CanAttack = attackTargets.Count > 0 && !HasAttacked;
         }
         
         public override void ShowAttackLocations()
         {
             HideLocations();
-            GetAttackCells();
+            GetAttackTargets();
 
-            attackTargets = new List<Cell>();
-
-            if (_topCell != null && _topCell.IsOccupied && _topCell.Character is EnemyCharacter)
+            foreach (var target in attackTargets)
             {
-                _topCell.RedBlink(true, -1);
-                attackTargets.Add(_topCell);
+                target.RedBlink(true, -1);
             }
-            if (_bottomCell != null && _bottomCell.IsOccupied && _bottomCell.Character is EnemyCharacter)
-            {
-                _bottomCell.RedBlink(true, -1);
-                attackTargets.Add(_bottomCell);
-            }
-            if (_leftCell != null && _leftCell.IsOccupied && _leftCell.Character is EnemyCharacter)
-            {
-                _leftCell.RedBlink(true, -1);
-                attackTargets.Add(_leftCell);
-            }
-            if (_rightCell != null && _rightCell.IsOccupied && _rightCell.Character is EnemyCharacter)
-            {
-                _rightCell.RedBlink(true, -1);
-                attackTargets.Add(_rightCell);
-            }
-
-            if (attackTargets.Count == 0) HasAttacked = true;
+            
+            CanAttack = attackTargets.Count > 0&& !HasAttacked;
         }
 
         protected override void HideLocations()
@@ -175,6 +176,7 @@ namespace Characters.Player
             {
                 target.AttackCell(AttackPonints);
             }
+            BoardManager.Instance.CheckActions();
         }
         
         public override void Die()
@@ -186,7 +188,7 @@ namespace Characters.Player
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdatePlayerInfo(this);
+            GameUIController.Instance.UpdatePlayerDisplay(this);
             sparks.Play();
         }
     }

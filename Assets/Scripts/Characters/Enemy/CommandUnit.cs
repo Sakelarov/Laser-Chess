@@ -266,7 +266,7 @@ namespace Characters.Enemy
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
             anim.SetTrigger(paramDamage);
         }
     }

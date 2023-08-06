@@ -30,25 +30,41 @@ public class UnitPortrait : MonoBehaviour
         portrait.sprite = sprite;
         location.text = UnitInfoDisplay.GetPosition(character.Location.Coordinates);
 
-        if (character.HasMoved) canMoveIndicator.SetActive(false);
-        else canMoveIndicator.SetActive(true);
-        
-        if (character.HasAttacked || character is CommandUnit) canAttackIndicator.SetActive(false);
-        else canAttackIndicator.SetActive(true);
-        
         selectedOverlay.SetActive(false);
         
         Show();
     }
 
+    private void SetupIndicatiors()
+    {
+        if (_character is PlayerCharacter ch)
+        {
+            canMoveIndicator.SetActive(ch.CanMove);
+            canAttackIndicator.SetActive(ch.CanAttack);
+        }
+        else
+        {
+            canMoveIndicator.SetActive(!_character.HasMoved);
+            canAttackIndicator.SetActive(!_character.HasAttacked && !(_character is CommandUnit));
+        }
+    }
+
     private void SelectCharacter()
     {
         BoardManager.Instance.UnselectAllCells();
-        
-        if (BoardManager.Instance.IsPlayerTurn && _character is PlayerCharacter pl &&
-            _character.Location.SelectCell() == CellState.Select)
+
+
+        if (_character is PlayerCharacter pl)
         {
-            BoardManager.Instance.SelectCharacter(pl);
+            if (BoardManager.Instance.IsPlayerTurn && _character.Location.SelectCell() == CellState.Select)
+            {
+                BoardManager.Instance.SelectCharacter(pl);
+            }
+            else
+            {
+                selectedOverlay.SetActive(true);
+                _info.Setup(_character);
+            }
         }
         else if (_character is EnemyCharacter)
         {
@@ -79,6 +95,25 @@ public class UnitPortrait : MonoBehaviour
     public void DisableAttackIndicator()
     {
         canAttackIndicator.SetActive(false);
+    }
+
+    public void UpdateActions()
+    {
+        if (_character is PlayerCharacter ch)
+        {
+            canMoveIndicator.SetActive(ch.CanMove);
+            canAttackIndicator.SetActive(ch.CanAttack);
+        }
+        else if (_character is EnemyCharacter enemy)
+        {
+            canMoveIndicator.SetActive(!enemy.HasMoved);
+            canAttackIndicator.SetActive(!enemy.HasAttacked);
+        }
+    }
+
+    public void UpdatePosition()
+    {
+        location.text = UnitInfoDisplay.GetPosition(_character.Location.Coordinates);
     }
 
     public void ResetTurn()

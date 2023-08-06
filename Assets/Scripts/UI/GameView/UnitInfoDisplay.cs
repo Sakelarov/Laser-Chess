@@ -1,6 +1,8 @@
+using System;
 using Characters.Enemy;
 using Characters.Models;
 using Characters.Player;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,16 +13,17 @@ public class UnitInfoDisplay : MonoBehaviour
     [SerializeField] private TextMeshProUGUI unitPosition;
     [SerializeField] private GameObject[] hpBars;
     [SerializeField] private GameObject[] atkBars;
-    // [SerializeField] private GameObject canMoveIndicator;
-    // [SerializeField] private GameObject canAttackIndicator;
-    // [SerializeField] private GameObject moveDisabledIndicator;
-    // [SerializeField] private GameObject attackDisabledIndicator;
     [SerializeField] private Button moveBtn;
     [SerializeField] private Button attackBtn;
     [SerializeField] private GameObject parent;
     [SerializeField] private Image background;
+    [SerializeField] private Image turnIndicator;
 
     [SerializeField] private bool isPlayerUI;
+
+    private readonly Color turnIndicatorInactive = new Color(1, 1, 1, 0.5f);
+    private readonly Color playerturnActive = new Color(0.85f, 0.45f, 0, 1);
+    private readonly Color enemyturnActive = new Color(0.12f, 0.45f, 0.5f, 1);
 
     private readonly Color playerUnselectedColor = new Color(0.85f, 0.45f, 0, 0.3f);
     private readonly Color playerSelectedColor = new Color(0.85f, 0.45f, 0, 0.6f);
@@ -30,11 +33,12 @@ public class UnitInfoDisplay : MonoBehaviour
 
     private Character _character;
 
+    private Sequence turnIndicatorSequence;
+
     public void Setup(Character character)
     {
         if (_character != null) _character.portrait.UnselectPortrait();
         _character = character;
-        
         unitName.text = GetUnitName(character);
         unitPosition.text = GetPosition(character.Location.Coordinates);
 
@@ -47,39 +51,63 @@ public class UnitInfoDisplay : MonoBehaviour
             else atkBars[i].SetActive(false);
         }
 
-        if (character.HasMoved)
+        SetupIndicators(character);
+        
+        Display();
+    }
+
+    private void SetupIndicators(Character character)
+    {
+        if (character is PlayerCharacter player)
         {
-            moveBtn.image.color = Color.black;
-            moveBtn.enabled = false;
-        }
-        else
-        {
-            moveBtn.image.color = Color.green;
-            if (character is PlayerCharacter pl)
+            if (player.CanMove)
             {
+                moveBtn.image.color = Color.green;
                 moveBtn.onClick.RemoveAllListeners();
-                moveBtn.onClick.AddListener(pl.ShowMoveLocations);
+                moveBtn.onClick.AddListener(player.ShowMoveLocations);
                 moveBtn.enabled = true;
             }
-        }
-        
-        if (character.HasAttacked || character is CommandUnit)
-        {
-            attackBtn.image.color = Color.black;
-            attackBtn.enabled = false;
-        }
-        else
-        {
-            attackBtn.image.color = Color.green;
-            if (character is PlayerCharacter pl)
+            else
             {
+                moveBtn.image.color = Color.black;
+                moveBtn.enabled = false;
+            }
+
+            if (player.CanAttack)
+            {
+                attackBtn.image.color = Color.green;
                 attackBtn.onClick.RemoveAllListeners();
-                attackBtn.onClick.AddListener(pl.ShowAttackLocations);
+                attackBtn.onClick.AddListener(player.ShowAttackLocations);
                 attackBtn.enabled = true;
             }
+            else
+            {
+                attackBtn.image.color = Color.black;
+                attackBtn.enabled = false;
+            }
         }
-
-        Display();
+        else if (character is EnemyCharacter enemy)
+        {
+            if (enemy.HasMoved)
+            {
+                moveBtn.image.color = Color.black;
+                moveBtn.enabled = false;
+            }
+            else
+            {
+                moveBtn.image.color = Color.green;
+            }
+        
+            if (enemy.HasAttacked || enemy is CommandUnit)
+            {
+                attackBtn.image.color = Color.black;
+                attackBtn.enabled = false;
+            }
+            else
+            {
+                attackBtn.image.color = Color.green;
+            }
+        }
     }
 
     public void UpdateInfo(Character character)
@@ -125,19 +153,23 @@ public class UnitInfoDisplay : MonoBehaviour
         parent.SetActive(true);
     }
     
-    public void Deactivate()
+    public void Clear()
     {
         if (isPlayerUI) background.color = playerUnselectedColor;
         else background.color = enemyUnselectedColor;
         
-        _character.portrait.UnselectPortrait();
-        _character = null;
         parent.SetActive(false);
+        
+        if (_character != null)
+        {
+            _character.portrait.UnselectPortrait();
+            _character = null;
+        }
     }
 
     public void DeactivateCharacter(Character character)
     {
-        if (character == _character) Deactivate();
+        if (character == _character) Clear();
     }
 
     public void Show()
@@ -148,5 +180,29 @@ public class UnitInfoDisplay : MonoBehaviour
     public void Hide()
     {
         UIEffects.PanelCloseTransition(gameObject);
+        DeactivateTurnIndicator();
+    }
+
+    public void ActivateTurnIndicator()
+    {
+        turnIndicatorSequence = DOTween.Sequence();
+        if (isPlayerUI)
+        {
+            turnIndicatorSequence.Append(DOVirtual.Color(turnIndicatorInactive, playerturnActive, 1, value => { turnIndicator.color = value; })
+                .SetEase(Ease.InOutSine));
+        }
+        else
+        {
+            turnIndicatorSequence.Append(DOVirtual.Color(turnIndicatorInactive, enemyturnActive, 1, value => { turnIndicator.color = value; })
+                .SetEase(Ease.InOutSine));
+        }
+
+        turnIndicatorSequence.SetLoops(-1, LoopType.Yoyo);
+    }
+
+    public void DeactivateTurnIndicator()
+    {
+        turnIndicatorSequence.Kill();
+        turnIndicator.color = turnIndicatorInactive;
     }
 }

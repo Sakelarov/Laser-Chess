@@ -20,10 +20,11 @@ namespace Characters.Models
             transform.LookAt(cell.Position);
             HasMoved = true;
             portrait.DisableMoveIndicator();
+            portrait.UpdatePosition();
             Location.SetCharacter(null);
             Location = cell;
             cell.SetCharacter(this);
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
         }
         
         public override void Die()

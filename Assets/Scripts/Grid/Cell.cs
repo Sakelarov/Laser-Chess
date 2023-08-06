@@ -131,5 +131,12 @@ namespace Grid
             if(Character.HealthPoints == 0) Character.Die();
             else Character.GetDamaged();
         }
+
+        public void ResetCell()
+        {
+            Character = null;
+            IsSelected = false;
+            DisableHighlight();
+        }
     }
 }

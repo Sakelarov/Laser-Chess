@@ -13,8 +13,8 @@ namespace Characters.Models
         public int HealthPoints;
         public int AttackPonints;
         public Cell Location { get; protected set; }
-        public bool HasMoved { get; protected set; }
-        public bool HasAttacked { get; protected set; }
+        public bool HasMoved { get; set; }
+        public bool HasAttacked { get; set; }
         public bool IsDead => HealthPoints <= 0;
 
         public virtual void Setup(Cell cell)
@@ -35,7 +35,7 @@ namespace Characters.Models
         public virtual void Die()
         {
             Location.SetCharacter(null);
-            Destroy(gameObject, 2.5f);
+            Destroy(gameObject, 4f);
             portrait.Hide();
         }
 

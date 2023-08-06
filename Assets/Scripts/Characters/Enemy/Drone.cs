@@ -114,7 +114,7 @@ namespace Characters.Enemy
 
             HasAttacked = true;
             portrait.DisableAttackIndicator();
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
             
             Vector3 difference = attackTarget.Position - Location.Position;
             var rotY = Mathf.Atan2(difference.x, difference.z) * Mathf.Rad2Deg;
@@ -204,7 +204,7 @@ namespace Characters.Enemy
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
             sparks.Play();
         }
     }

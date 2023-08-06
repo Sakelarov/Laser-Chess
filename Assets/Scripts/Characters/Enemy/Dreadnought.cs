@@ -214,7 +214,7 @@ namespace Characters.Enemy
 
             HasAttacked = true;
             portrait.DisableAttackIndicator();
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
             
             anim.SetBool(paramAttack, true);
             flameThrower.Play();
@@ -246,7 +246,7 @@ namespace Characters.Enemy
 
         public override void GetDamaged()
         {
-            GameUIController.Instance.UpdateEnemyInfo(this);
+            GameUIController.Instance.UpdateEnemyDisplay(this);
             sparks.Play();
             anim.SetTrigger(paramDamage);
         }

@@ -1,12 +1,26 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour
 {
+    private static MainMenuController instance;
+
+    public static MainMenuController Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                var inst = FindObjectOfType<MainMenuController>();
+                instance = inst;
+            }
+
+            return instance;
+        }
+    }
+    
     [SerializeField] private GameObject title;
     [SerializeField] private GameObject madeBy;
     
@@ -76,6 +90,36 @@ public class MainMenuController : MonoBehaviour
         }).OnComplete(() =>
         {
             CameraController.Instance.GoToPosition(CameraController.CameraPosition.GameView, onComplete);
+        });
+    }
+
+    public void OpenMainMenu()
+    {
+        CameraController.Instance.GoToPosition(CameraController.CameraPosition.MainMenu, () =>
+        {
+            UIEffects.PanelOpenTransition(title, 2);
+            madeBy.SetActive(true);
+            
+            DOVirtual.Vector3(reducedScale, Vector3.one, 0.15f, value =>
+            {
+                foreach (var tr in leftBtns) tr.localScale = value;
+                foreach (var tr in rightBtns) tr.localScale = value;
+            });
+
+            DOVirtual.Float(offset, 0, 0.3f, value =>
+            {
+                foreach (var tr in leftBtns)
+                {
+                    tr.offsetMax = new Vector2(-value, 0);
+                    tr.offsetMin = new Vector2(-value, 0);
+                }
+
+                foreach (var tr in rightBtns)
+                {
+                    tr.offsetMax = new Vector2(value, 0);
+                    tr.offsetMin = new Vector2(value, 0);
+                }
+            });
         });
     }
 
