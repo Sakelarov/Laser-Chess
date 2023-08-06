@@ -30,6 +30,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button exitBtn;
 
     [SerializeField] private CustomLevelsPopup customLevelsPopup;
+    [SerializeField] private CreditsPopup creditsPopup;
 
     private RectTransform[] leftBtns = new RectTransform[3];
     private RectTransform[] rightBtns = new RectTransform[3];
@@ -132,6 +133,6 @@ public class MainMenuController : MonoBehaviour
 
     private void OpenCredits()
     {
-        
+        creditsPopup.OpenPopup(null);
     }
 }

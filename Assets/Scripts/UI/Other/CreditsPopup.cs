@@ -1,18 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class CreditsPopup : MonoBehaviour
+public class CreditsPopup : Popup
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] private Button closeBtn;
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        
+        closeBtn.onClick.AddListener(() => ClosePopup(null));
     }
 }
