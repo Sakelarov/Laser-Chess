@@ -7,6 +7,9 @@ public abstract class PlayerCharacter : Character
 {
     protected bool IsSelected;
 
+    protected bool moveLocationsDisplayed;
+    protected bool attackLocationsDisplayed;
+
     public bool CanMove { get; set; }
     public bool CanAttack { get; set; }
     public bool HasActions => (!HasMoved && CanMove) || (!HasAttacked && CanAttack);
@@ -35,9 +38,19 @@ public abstract class PlayerCharacter : Character
     protected virtual void SelectCharacter()
     {
         IsSelected = true;
-        
-        if (!HasMoved) ShowMoveLocations();
-        else if (!HasAttacked) ShowAttackLocations();
+
+        if (CanMove)
+        {
+            ShowMoveLocations();
+            moveLocationsDisplayed = true;
+            portrait.BlinkMove();
+        }
+        else if (CanAttack)
+        {
+            ShowAttackLocations();
+            attackLocationsDisplayed = true;
+            portrait.BlinkAttack();
+        }
     }
 
     public void UnSelectCharacter()
@@ -48,7 +61,29 @@ public abstract class PlayerCharacter : Character
 
     protected void CheckSelectedCharacter(PlayerCharacter character)
     {
-        if (IsSelected && this != character) UnSelectCharacter();
+        if (IsSelected)
+        {
+            if (this != character) UnSelectCharacter();
+            else
+            {
+                if (moveLocationsDisplayed && CanAttack)
+                {
+                    Bm.ForEachCell(c => c.DisableHighlight());
+                    moveLocationsDisplayed = false;
+                    attackLocationsDisplayed = true;
+                    portrait.BlinkAttack();
+                    ShowAttackLocations();
+                }
+                else if (attackLocationsDisplayed && CanMove)
+                {
+                    Bm.ForEachCell(c => c.DisableHighlight());
+                    attackLocationsDisplayed = false;
+                    moveLocationsDisplayed = true;
+                    portrait.BlinkMove();
+                    ShowMoveLocations();
+                }
+            }
+        }
         else if (!IsSelected && this == character) this.InvokeAfterFrames(1,SelectCharacter);
     }
 
@@ -68,6 +103,8 @@ public abstract class PlayerCharacter : Character
     
     public override void ResetTurn()
     {
+        moveLocationsDisplayed = false;
+        attackLocationsDisplayed = false;
         HasMoved = false;
         HasAttacked = false;
         StartTurn();

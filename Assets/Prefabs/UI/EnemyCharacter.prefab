@@ -608,8 +608,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portrait: {fileID: 1616573681220822423}
   location: {fileID: 1616573680569503375}
-  canMoveIndicator: {fileID: 1616573680586604200}
-  canAttackIndicator: {fileID: 1616573680440916690}
+  canMoveIndicator: {fileID: 1616573680586604202}
+  canAttackIndicator: {fileID: 1616573680440916692}
   selectedOverlay: {fileID: 1616573680619968203}
   selectBtn: {fileID: 1222611427822952519}
 --- !u!1 &1616573681972903793

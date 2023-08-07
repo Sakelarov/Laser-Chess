@@ -22,18 +22,17 @@ public class UnitInfoDisplay : MonoBehaviour
     [SerializeField] private bool isPlayerUI;
 
     private readonly Color turnIndicatorInactive = new Color(1, 1, 1, 0.5f);
-    private readonly Color playerturnActive = new Color(0.85f, 0.45f, 0, 1);
-    private readonly Color enemyturnActive = new Color(0.12f, 0.45f, 0.5f, 1);
+    private readonly Color playerturnActive = new Color(1f, 0f, 1, 1f);
+    private readonly Color enemyturnActive = new Color(0, 0.8f, 1f, 1f);
 
-    private readonly Color playerUnselectedColor = new Color(0.85f, 0.45f, 0, 0.3f);
-    private readonly Color playerSelectedColor = new Color(0.85f, 0.45f, 0, 0.6f);
+    private readonly Color playerUnselectedColor = new Color(1f, 0, 1, 0.25f);
+    private readonly Color playerSelectedColor = new Color(1f, 0, 1, 0.5f);
     
-    private readonly Color enemyUnselectedColor = new Color(1, 1, 1, 0.1f);
-    private readonly Color enemySelectedColor = new Color(1, 1f, 1, 0.2f);
+    private readonly Color enemyUnselectedColor = new Color(1, 1, 1, 0.2f);
+    private readonly Color enemySelectedColor = new Color(1, 1f, 1, 0.4f);
 
     private Character _character;
-
-    private Sequence turnIndicatorSequence;
+    private Tweener tween;
 
     public void Setup(Character character)
     {
@@ -185,24 +184,21 @@ public class UnitInfoDisplay : MonoBehaviour
 
     public void ActivateTurnIndicator()
     {
-        turnIndicatorSequence = DOTween.Sequence();
         if (isPlayerUI)
         {
-            turnIndicatorSequence.Append(DOVirtual.Color(turnIndicatorInactive, playerturnActive, 1, value => { turnIndicator.color = value; })
-                .SetEase(Ease.InOutSine));
+            tween = DOVirtual.Color(turnIndicatorInactive, playerturnActive, 1, value => { turnIndicator.color = value; })
+                .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetLink(gameObject, LinkBehaviour.KillOnDisable);
         }
         else
         {
-            turnIndicatorSequence.Append(DOVirtual.Color(turnIndicatorInactive, enemyturnActive, 1, value => { turnIndicator.color = value; })
-                .SetEase(Ease.InOutSine));
+            tween = DOVirtual.Color(turnIndicatorInactive, enemyturnActive, 1, value => { turnIndicator.color = value; })
+                .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetLink(gameObject, LinkBehaviour.KillOnDisable);
         }
-
-        turnIndicatorSequence.SetLoops(-1, LoopType.Yoyo);
     }
 
     public void DeactivateTurnIndicator()
     {
-        turnIndicatorSequence.Kill();
+        if (tween.IsActive()) tween.Kill();
         turnIndicator.color = turnIndicatorInactive;
     }
 }

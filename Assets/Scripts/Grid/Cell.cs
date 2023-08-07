@@ -10,13 +10,14 @@ namespace Grid
     [System.Serializable]
     public class Cell : MonoBehaviour
     {
-        [SerializeField] private Material highlightMat;
+        [SerializeField] private Material attackMat;
+        [SerializeField] private Material movementMat;
        
         private readonly Vector3 psnCorrection = new Vector3(0, 0.12f, 0);
         private readonly Color redTransp = new Color(1, 0, 0, 0);
         private readonly Color red40 = new Color(1, 0, 0, 0.40f);
         private readonly Color greenTransp = new Color(0, 1, 0, 0);
-        private readonly Color green25 = new Color(0, 1, 0, 0.25f);
+        private readonly Color green = new Color(0, 1, 0, 1f);
         private MeshRenderer highlight;
         private bool _isMovingCell;
         private bool _isAttackingCell;
@@ -49,9 +50,9 @@ namespace Grid
         {
             _isMovingCell = true;
             
-            Material mat = Instantiate(highlightMat);
+            Material mat = Instantiate(movementMat);
             
-            DOVirtual.Color(greenTransp, green25, BlinkDuration * 2, value => mat.color = value)
+            DOVirtual.Color(greenTransp, green, BlinkDuration, value => mat.color = value)
                 .SetEase(Ease.InOutSine)
                 .SetLoops(-1, LoopType.Yoyo)
                 .SetLink(highlight.gameObject, LinkBehaviour.KillOnDisable);
@@ -64,7 +65,7 @@ namespace Grid
         {
             _isAttackingCell = isTarget;
             
-            Material mat = Instantiate(highlightMat);
+            Material mat = Instantiate(attackMat);
             
             DOVirtual.Color(redTransp, red40, BlinkDuration, value => mat.color = value)
                 .SetEase(Ease.InOutSine)

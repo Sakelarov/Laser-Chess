@@ -69,8 +69,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portrait: {fileID: 274889825072742514}
   location: {fileID: 274889824910601066}
-  canMoveIndicator: {fileID: 274889824423451469}
-  canAttackIndicator: {fileID: 274889824778854199}
+  canMoveIndicator: {fileID: 274889824423451471}
+  canAttackIndicator: {fileID: 274889824778854193}
   selectedOverlay: {fileID: 274889824457225006}
   selectBtn: {fileID: 1290585126434667707}
 --- !u!1 &274889824178035348
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8666667, g: 0.4509804, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -356,7 +356,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8666667, g: 0.4509804, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

@@ -34,6 +34,7 @@ public class BoardManager : MonoBehaviour
     private Camera cam;
     private RaycastHit hit;
     private PlayerCharacter currentPlayer;
+    private PlayerCharacter currentlyHighlightedCharacter;
     private List<PlayerCharacter> playerUnits = new List<PlayerCharacter>();
     private List<EnemyCharacter> enemyUnits = new List<EnemyCharacter>();
     private List<Drone> drones = new List<Drone>();
@@ -82,6 +83,7 @@ public class BoardManager : MonoBehaviour
         drones = new List<Drone>();
         dreadnoughts = new List<Dreadnought>();
         commandUnits = new List<CommandUnit>();
+        
         switch (level)
         {
             case LevelType.Level1 : levelSpawner = LevelInfo.SetupLevel1(playerUnits, enemyUnits, drones, dreadnoughts, commandUnits, allEnemiesSpawned); break;
@@ -253,6 +255,8 @@ public class BoardManager : MonoBehaviour
 
     public void EndPlayerTurn()
     {
+        if(!IsPlayerTurn) return;
+        
         if (currentPlayer != null) currentPlayer.UnSelectCharacter();
         currentPlayer = null;
         IsPlayerTurn = false;

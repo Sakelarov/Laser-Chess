@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Characters.Enemy;
 using Characters.Models;
+using DG.Tweening;
 using Grid;
 using TMPro;
 using UnityEngine;
@@ -12,10 +13,15 @@ public class UnitPortrait : MonoBehaviour
 {
     [SerializeField] private Image portrait;
     [SerializeField] private TextMeshProUGUI location;
-    [SerializeField] private GameObject canMoveIndicator;
-    [SerializeField] private GameObject canAttackIndicator;
+    [SerializeField] private Image canMoveIndicator;
+    [SerializeField] private Image canAttackIndicator;
     [SerializeField] private GameObject selectedOverlay;
     [SerializeField] private Button selectBtn;
+    
+    private readonly Color greenTransp = new Color(0, 1, 0, 0);
+
+    private Tweener moveTween;
+    private Tweener attackTween;
 
     private Character _character;
     private UnitInfoDisplay _info;
@@ -35,19 +41,19 @@ public class UnitPortrait : MonoBehaviour
         Show();
     }
 
-    private void SetupIndicatiors()
-    {
-        if (_character is PlayerCharacter ch)
-        {
-            canMoveIndicator.SetActive(ch.CanMove);
-            canAttackIndicator.SetActive(ch.CanAttack);
-        }
-        else
-        {
-            canMoveIndicator.SetActive(!_character.HasMoved);
-            canAttackIndicator.SetActive(!_character.HasAttacked && !(_character is CommandUnit));
-        }
-    }
+    // private void SetupIndicatiors()
+    // {
+    //     if (_character is PlayerCharacter ch)
+    //     {
+    //         canMoveIndicator.SetActive(ch.CanMove);
+    //         canAttackIndicator.SetActive(ch.CanAttack);
+    //     }
+    //     else
+    //     {
+    //         canMoveIndicator.SetActive(!_character.HasMoved);
+    //         canAttackIndicator.SetActive(!_character.HasAttacked && !(_character is CommandUnit));
+    //     }
+    // }
 
     private void SelectCharacter()
     {
@@ -62,14 +68,14 @@ public class UnitPortrait : MonoBehaviour
             }
             else
             {
-                selectedOverlay.SetActive(true);
                 _info.Setup(_character);
+                selectedOverlay.SetActive(true);
             }
         }
         else if (_character is EnemyCharacter)
         {
-            selectedOverlay.SetActive(true);
             _info.Setup(_character);
+            selectedOverlay.SetActive(true);
         }
     }
 
@@ -77,37 +83,72 @@ public class UnitPortrait : MonoBehaviour
     {
         if (selectedOverlay.activeSelf) return;
         
-        selectedOverlay.SetActive(true);
         _info.Setup(_character);
+        selectedOverlay.SetActive(true);
         _character.Location.SelectCell();
+    }
+
+    public void BlinkMove()
+    {
+        StopBlinks();
+        
+        moveTween = DOVirtual.Color(Color.green, greenTransp, 0.65f, v => canMoveIndicator.color = v)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetLink(canMoveIndicator.gameObject, LinkBehaviour.KillOnDisable);
+    }
+
+    public void BlinkAttack()
+    {
+        StopBlinks();
+        
+        attackTween = DOVirtual.Color(Color.green, greenTransp, 0.65f, v => canAttackIndicator.color = v)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetLink(canMoveIndicator.gameObject, LinkBehaviour.KillOnDisable);
+    }
+
+    public void StopBlinks()
+    {
+        if (_character is PlayerCharacter ch)
+        {
+            if(attackTween.IsActive()) attackTween.Kill();
+            if(moveTween.IsActive()) moveTween.Kill();
+
+            if (ch.CanMove) canMoveIndicator.color = Color.green;
+            if(ch.CanAttack) canAttackIndicator.color = Color.green;
+        }
     }
 
     public void UnselectPortrait()
     {
         selectedOverlay.SetActive(false);
+        StopBlinks();
     }
 
     public void DisableMoveIndicator()
     {
-        canMoveIndicator.SetActive(false);
+        if (moveTween.IsActive()) moveTween.Kill();
+        canMoveIndicator.gameObject.SetActive(false);
     }
 
     public void DisableAttackIndicator()
     {
-        canAttackIndicator.SetActive(false);
+        if (attackTween.IsActive()) attackTween.Kill();
+        canAttackIndicator.gameObject.SetActive(false);
     }
 
     public void UpdateActions()
     {
+        if (gameObject == null) return;
+        
         if (_character is PlayerCharacter ch)
         {
-            canMoveIndicator.SetActive(ch.CanMove);
-            canAttackIndicator.SetActive(ch.CanAttack);
+            canMoveIndicator.gameObject.SetActive(ch.CanMove);
+            canAttackIndicator.gameObject.SetActive(ch.CanAttack);
         }
         else if (_character is EnemyCharacter enemy)
         {
-            canMoveIndicator.SetActive(!enemy.HasMoved);
-            canAttackIndicator.SetActive(!enemy.HasAttacked);
+            canMoveIndicator.gameObject.SetActive(!enemy.HasMoved);
+            canAttackIndicator.gameObject.SetActive(!enemy.HasAttacked);
         }
     }
 
@@ -120,10 +161,15 @@ public class UnitPortrait : MonoBehaviour
     {
         if(_character == null || _character.IsDead) return;
         
-        canMoveIndicator.SetActive(true);
+        canMoveIndicator.color = Color.green;
+        canMoveIndicator.gameObject.SetActive(true);
         
-        if (_character is CommandUnit) canAttackIndicator.SetActive(false);
-        else canAttackIndicator.SetActive(true);
+        if (_character is CommandUnit) canAttackIndicator.gameObject.SetActive(false);
+        else
+        {
+            canAttackIndicator.color = Color.green;
+            canAttackIndicator.gameObject.SetActive(true);
+        }
     }
 
     public void Show()

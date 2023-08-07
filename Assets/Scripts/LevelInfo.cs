@@ -109,7 +109,7 @@ public static class LevelInfo
             yield return new WaitForSeconds(delayBetweenSpawning);
         }
 
-        var command = (CommandUnit)BoardManager.SpawnPiece(7, 3, commandUnitPrefab);
+        var command = (CommandUnit)BoardManager.SpawnPiece(7, 7, commandUnitPrefab);
         commandUnits.Add(command);
         enemyUnits.Add(command);
 
@@ -237,7 +237,7 @@ public static class LevelInfo
         }
         yield return new WaitForSeconds(delayAfterPlayerUnitsSpawned);
 
-        (int, int)[] dronePsns = { (4, 0), (4, 2), (4, 4),  (4, 6), (5, 1), (5, 3), (5, 5),  (5, 7), (6, 0), (6, 2), (6, 4),  (6, 6) };
+        (int, int)[] dronePsns = { (4, 0), (4, 2), (4, 4),  (4, 6), (5, 1), (5, 3), (5, 5), (5, 7), (6, 0), (6, 2), (6, 4), (6, 6) };
         foreach (var psn in dronePsns)
         {
             var drone = (Drone)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dronePrefab);
@@ -305,6 +305,7 @@ public static class LevelInfo
     {
         Dictionary<(int, int), GameObject> players = new Dictionary<(int, int), GameObject>()
         {
+            { (0, 2), gruntPrefab}, { (1, 3), gruntPrefab}, { (0, 4), gruntPrefab},
             { (0, 1), jumpshipPrefab}, { (0, 3), jumpshipPrefab}, { (0, 5), jumpshipPrefab}, { (0, 7), jumpshipPrefab},
             { (1, 0), jumpshipPrefab}, { (1, 2), jumpshipPrefab}, { (1, 4), jumpshipPrefab}, { (1, 6), jumpshipPrefab},
         };
@@ -320,8 +321,7 @@ public static class LevelInfo
         
         (int, int)[] dronePsns =
         {
-            (4, 0), (4, 1), (4, 2),  (4, 3), (4, 4), (4, 5), (4, 6),  (4, 7),
-            (6, 0), (6, 1), (6, 2),  (6, 3), (6, 4), (6, 5), (6, 6),  (6, 7)
+            (4, 0), (4, 2), (4, 4), (4, 6), (6, 0), (6, 2), (6, 4), (6, 6)
         };
         foreach (var psn in dronePsns)
         {
@@ -331,7 +331,7 @@ public static class LevelInfo
             yield return new WaitForSeconds(delayBetweenSpawning);
         }
 
-        (int, int)[] dreadPsns = { (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),  (5, 7) };
+        (int, int)[] dreadPsns = { (5, 1), (5, 3), (5, 5), (5, 7) };
         foreach (var psn in dreadPsns)
         {
             var dread = (Dreadnought)BoardManager.SpawnPiece(psn.Item1, psn.Item2, dreadnoughtPrefab);

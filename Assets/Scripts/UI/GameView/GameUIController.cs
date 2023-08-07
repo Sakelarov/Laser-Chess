@@ -39,8 +39,6 @@ public class GameUIController : MonoBehaviour
 
     [SerializeField] private GameObject topMenu;
     [SerializeField] private Popup pausePopup;
-    // [SerializeField] private CanvasGroup pauseMenuOverlay;
-    // [SerializeField] private GameObject pauseMenuBG;
     [SerializeField] private Button endTurnBtn;
     [SerializeField] private Button settingsBtn;
     [SerializeField] private Button continueBtn;
@@ -48,17 +46,14 @@ public class GameUIController : MonoBehaviour
     [SerializeField] private Button mainMenuBtn;
 
     [SerializeField] private Popup endGamePopup;
-    // [SerializeField] private CanvasGroup endGameMenuOverlay;
-    // [SerializeField] private GameObject endGameMenuBG;
     [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private Button tryAgainBtn;
     [SerializeField] private Button menuBtn;
 
     private RectTransform settingsBtnRect;
-    private readonly float pauseBtnOffset = 110;
 
     private readonly string playerWinText = "Congratulations! You Won!";
-    private readonly string enemyWinText = "Game over!\nNice Try!";
+    private readonly string enemyWinText = "Game Over!\nNice Try!";
 
     private bool isInitialized;
 
@@ -139,8 +134,6 @@ public class GameUIController : MonoBehaviour
         enemyDisplay.Hide();
         UIEffects.PanelCloseTransition(topMenu, 1, 0, () =>
         {
-            settingsBtnRect.offsetMax = new Vector2(-pauseBtnOffset, 0);
-            settingsBtnRect.offsetMin = new Vector2(-pauseBtnOffset, 0);
             endTurnBtn.gameObject.SetActive(false);
         }, null, true);
         
@@ -225,11 +218,6 @@ public class GameUIController : MonoBehaviour
         ClearPlayerDisplay();
 
         UIEffects.PanelOpenTransition(endTurnBtn.gameObject);
-        DOVirtual.Float(pauseBtnOffset, 0, 0.25f, value =>
-            {
-                settingsBtnRect.offsetMax = new Vector2(-value, 0);
-                settingsBtnRect.offsetMin = new Vector2(-value, 0);
-            }).SetEase(Ease.Linear);
     }
 
     public void ActivateEnemyTurn()
@@ -237,11 +225,6 @@ public class GameUIController : MonoBehaviour
         playerDisplay.DeactivateTurnIndicator();
         enemyDisplay.ActivateTurnIndicator();
         
-        DOVirtual.Float(0, pauseBtnOffset, 0.25f, value =>
-        {
-            settingsBtnRect.offsetMax = new Vector2(-value, 0);
-            settingsBtnRect.offsetMin = new Vector2(-value, 0);
-        }).SetEase(Ease.Linear);
         UIEffects.PanelCloseTransition(endTurnBtn.gameObject);
     }
 
