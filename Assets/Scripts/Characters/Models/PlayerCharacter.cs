@@ -1,6 +1,5 @@
 using Characters.Models;
 using Grid;
-using UnityEngine;
 using Utils;
 
 public abstract class PlayerCharacter : Character

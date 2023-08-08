@@ -1,4 +1,3 @@
-using System;
 using Characters.Enemy;
 using Characters.Models;
 using Characters.Player;

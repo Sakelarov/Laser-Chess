@@ -1,12 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using Characters.Enemy;
 using Characters.Models;
 using DG.Tweening;
 using Grid;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class UnitPortrait : MonoBehaviour

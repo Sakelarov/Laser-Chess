@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Characters.Models;
@@ -6,7 +5,6 @@ using Characters.Player;
 using DG.Tweening;
 using Grid;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Characters.Enemy
 {

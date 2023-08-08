@@ -1,9 +1,7 @@
-using Characters;
 using Characters.Models;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Grid
 {

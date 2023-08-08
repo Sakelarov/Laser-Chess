@@ -3,7 +3,6 @@ using Characters.Models;
 using DG.Tweening;
 using Grid;
 using UnityEngine;
-using UnityEngine.Android;
 
 namespace Characters.Player
 {

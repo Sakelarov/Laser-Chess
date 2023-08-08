@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Characters.Models;
 using DG.Tweening;
-using Grid;
 using UnityEngine;
 using Cell = Grid.Cell;
 
@@ -14,7 +13,6 @@ namespace Characters.Enemy
         [SerializeField] private ParticleSystem sparks;
         [SerializeField] private ParticleSystem flameThrower;
         private List<Cell> closestPlayerCharacters = new List<Cell>();
-        private List<Cell> availableTargets = new List<Cell>();
         private List<Cell> cellsAtDistance1 = new List<Cell>();
         private List<Cell> cellsAtDistance2 = new List<Cell>();
 
